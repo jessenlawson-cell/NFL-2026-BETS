@@ -48,4 +48,3 @@ try:
 
 except Exception as e:
     print(f"Error during baseline generation: {e}")
-    python fetch_data.py
