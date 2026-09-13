@@ -1,1 +1,1 @@
-game_id,away_team,home_team,market_spread,market_total,away_ml,home_ml
+snapshot_id,provider_event_id,game_id,commence_time_utc,bookmaker_key,bookmaker_title,bookmaker_group,market,selection,point,canonical_line,american_price,decimal_price,implied_probability,vig_free_probability,overround,last_update_utc,source,retrieved_at_utc,source_updated_at_utc,schema_version,content_hash

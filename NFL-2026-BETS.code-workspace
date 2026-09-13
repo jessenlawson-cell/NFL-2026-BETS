@@ -1,0 +1,13 @@
+{
+  "folders": [
+    {
+      "name": "NFL-2026-BETS",
+      "path": "."
+    }
+  ],
+  "settings": {
+    "python.analysis.typeCheckingMode": "basic",
+    "python.terminal.activateEnvironment": true,
+    "terminal.integrated.cwd": "${workspaceFolder:NFL-2026-BETS}"
+  }
+}

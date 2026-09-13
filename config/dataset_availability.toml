@@ -1,0 +1,12 @@
+[coverage_metrics]
+status = "UNAVAILABLE"
+enabled_for_features = false
+reason = "No validated V2 coverage source is configured. Values must never be synthesized."
+
+[injuries]
+status = "VALIDATED_INPUT_ONLY"
+enabled_for_features = false
+
+[player_usage]
+status = "VALIDATED_INPUT_ONLY"
+enabled_for_features = false

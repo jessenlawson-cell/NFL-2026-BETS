@@ -1,0 +1,21 @@
+timezone = "America/Toronto"
+weekly_call_limit = 20
+manual_reserve = 4
+
+[slots]
+sunday_open_2000 = "Sunday 20:00"
+sunday_open_2330 = "Sunday 23:30"
+wednesday_0900 = "Wednesday 09:00"
+wednesday_1700 = "Wednesday 17:00"
+thursday_1200 = "Thursday 12:00"
+thursday_1930 = "Thursday 19:30"
+friday_1700 = "Friday 17:00"
+saturday_0900 = "Saturday 09:00"
+saturday_1700 = "Saturday 17:00"
+saturday_2300 = "Saturday 23:00"
+sunday_0845 = "Sunday 08:45"
+sunday_1245 = "Sunday 12:45"
+sunday_1545 = "Sunday 15:45"
+sunday_1945 = "Sunday 19:45"
+monday_1200 = "Monday 12:00"
+monday_1945 = "Monday 19:45"

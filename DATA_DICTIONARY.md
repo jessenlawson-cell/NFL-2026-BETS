@@ -1,30 +1,61 @@
-# 2026 NFL BETTING DATA DICTIONARY
-## 1. team_metrics.csv
-- `team_id`: String (2-3 letter code uppercase: e.g., KC, BUF, SF) [Primary Key]
-- `season`: Integer (2026)
-- `week`: Integer (Current week of data snapshot)
-- `off_pass_epa`: Float (Offensive dropback Expected Points Added per play)
-- `def_pass_epa`: Float (Defensive dropback EPA allowed per play)
-- `off_rush_epa`: Float (Offensive rushing EPA per play)
-- `def_rush_epa`: Float (Defensive rushing EPA allowed per play)
-- `off_success_rate`: Float (Offensive success percentage, 0.00 to 1.00)
-- `def_success_rate`: Float (Defensive success percentage allowed, 0.00 to 1.00)
-- `pbwr`: Float (Pass Block Win Rate percentage, 0.00 to 1.00)
-- `prwr`: Float (Pass Rush Win Rate percentage, 0.00 to 1.00)
+# 2026 NFL Betting Data Dictionary
 
-## 2. market_odds.csv
-- `game_id`: String (Format: YYYY_WW_AWAY_HOME, e.g., 2026_01_KC_BUF) [Primary Key]
-- `away_team`: String (Canonical team_id for visiting team)
-- `home_team`: String (Canonical team_id for home team)
-- `market_spread`: Float (Point spread relative to the away team; e.g., +3.5, -2.5)
-- `market_total`: Float (Consensus over/under game total; e.g., 44.5)
-- `away_ml`: Integer (American moneyline odds; e.g., +150, -110)
-- `home_ml`: Integer (American moneyline odds; e.g., -170, +110)
+The executable column contract is `src/nfl_bets/schemas.py`; SQLite mirrors these fields exactly.
+Every authoritative artifact includes `source`, `retrieved_at_utc`, `source_updated_at_utc`,
+`schema_version`, and a canonical row-level `content_hash`. Blank source-update timestamps mean the
+upstream source did not publish one; they never mean retrieval time.
 
-## 3. injuries.csv
-- `player_id`: String (Unique identifier code) [Primary Key]
-- `team_id`: String (Canonical team_id of player)
-- `position`: String (Position code: QB, LT, CB, EDGE)
-- `injury_status`: String (Categorical: OUT, DOUBTFUL, QUESTIONABLE)
-- `snap_share_impact`: Float (Expected percentage of team snaps lost, 0.00 to 1.00)
-- `replacement_quality`: Float (Performance drop-off multiplier of backup player)
+## `games.csv`
+
+Primary key: `game_id`. Canonical regular-season schedule, result, rest, weather/surface context,
+closing spread/total lines, and closing prices. Core identifiers are `season`, `week`, `game_type`,
+`kickoff_utc`, `away_team`, and `home_team`. `result` is home score minus away score;
+`spread_line` is positive when the home team is favored.
+
+## `team_metrics.csv`
+
+Primary key: (`game_id`, `team_id`). One pregame team snapshot with `kickoff_utc`, opponent,
+home/away flag, completed-game count, four-game EWMA offensive/defensive pass/rush EPA and success
+rate, `feature_as_of_utc`, and `half_life`. Every current-season rolling input is shifted by one game
+before weighting. These are V1's only football model features besides rest differential.
+
+## `market_odds.csv`
+
+Append-only primary key: (`snapshot_id`, `provider_event_id`, `bookmaker_key`, `market`,
+`selection`). Stores the provider event, nflverse game match, bookmaker group, offered point,
+canonical line, American/decimal price, implied and no-vig probability, overround, quote update time,
+and retrieval metadata. Spread probability orientation is HOME; total orientation is OVER.
+
+## `injuries.csv`
+
+Primary key: (`season`, `week`, `team_id`, `player_id`). Stores nflreadpy injury and practice report
+fields. `snap_share_impact` and `replacement_quality` remain nullable and feature-disabled in V1.
+
+## `player_usage.csv`
+
+Primary key: (`season`, `week`, `game_id`, `player_id`, `team_id`). Stores nflreadpy offense,
+defense, and special-teams snap counts and percentages. Validated but feature-disabled in V1.
+
+## `coverage_metrics.csv`
+
+Primary key: (`season`, `week`, `game_id`, `team_id`, `metric_name`). Schema-controlled V2 holding
+area. `availability_status` is `UNAVAILABLE` until a validated source exists; values must never be
+synthesized.
+
+## `model_history.csv`
+
+Append-only primary key: (`model_version`, `command`, `created_at_utc`). Stores every train/test
+event, data/spec hashes, artifact path, market-regression weights, candidate and market Brier/log
+loss values, and status. Failed and PASS-only versions are permanent history.
+
+## `bet_log.csv`
+
+Append-only primary key: `bet_id`. Stores the full decision contract, including PASS decisions,
+available contract, price, stake/bankroll, model and market probability, expected ROI, version/data
+timestamps, close/CLV, result, and profit/loss. Prior predictions and losses are immutable.
+
+## Operational SQLite tables
+
+`ingestion_runs`, `raw_snapshots`, `api_requests`, `market_consensus`, `model_test_registry`, and
+`schema_migrations` provide provenance, quota accounting, consensus diagnostics, one-time test
+enforcement, and migration history. They are local infrastructure rather than authoritative CSVs.

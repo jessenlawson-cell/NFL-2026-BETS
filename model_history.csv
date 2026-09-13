@@ -1,0 +1,1 @@
+model_version,created_at_utc,command,development_end_season,test_season,spec_hash,feature_hash,artifact_path,status,spread_alpha,total_alpha,spread_brier,spread_log_loss,spread_market_brier,spread_market_log_loss,total_brier,total_log_loss,total_market_brier,total_market_log_loss,notes,source,retrieved_at_utc,source_updated_at_utc,schema_version,content_hash

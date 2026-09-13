@@ -1,0 +1,1 @@
+game_id,season,week,game_type,kickoff_utc,away_team,home_team,away_score,home_score,result,total,away_rest,home_rest,away_moneyline,home_moneyline,spread_line,away_spread_odds,home_spread_odds,total_line,under_odds,over_odds,roof,surface,temp,wind,source,retrieved_at_utc,source_updated_at_utc,schema_version,content_hash

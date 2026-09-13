@@ -1,0 +1,1 @@
+bet_id,timestamp,season,week,game_id,market,selection,line,price,book,stake,bankroll,model_probability,market_fair_probability,expected_roi,model_version,data_timestamp,closing_line,closing_price,vig_free_closing_probability,probability_clv,result,profit_loss,decision,reason,source,retrieved_at_utc,source_updated_at_utc,schema_version,content_hash

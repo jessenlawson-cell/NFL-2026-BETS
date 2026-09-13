@@ -1,0 +1,1 @@
+"""Authoritative nflverse ingestion."""
