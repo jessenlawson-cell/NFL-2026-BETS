@@ -19,7 +19,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /workspace
 
 RUN apt-get update \
-    && apt-get install --yes --no-install-recommends ca-certificates tzdata \
+    && apt-get install --yes --no-install-recommends ca-certificates git tzdata \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt requirements.lock pyproject.toml ./

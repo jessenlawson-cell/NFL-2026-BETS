@@ -82,7 +82,7 @@ def _stable_id(*parts: object) -> str:
 
 def _run_git(root: Path, *arguments: str) -> str:
     result = subprocess.run(
-        ["git", *arguments],
+        ["git", "-c", f"safe.directory={root}", *arguments],
         cwd=root,
         check=True,
         capture_output=True,
@@ -102,6 +102,8 @@ def _verify_git_identity(settings: Settings, policy: dict[str, Any]) -> str:
         subprocess.run(
             [
                 "git",
+                "-c",
+                f"safe.directory={settings.root}",
                 "merge-base",
                 "--is-ancestor",
                 str(policy["freeze_commit"]),
@@ -121,6 +123,8 @@ def _verify_git_identity(settings: Settings, policy: dict[str, Any]) -> str:
             "pyproject.toml",
             "requirements.txt",
             "requirements.lock",
+            "Dockerfile",
+            "docker-compose.yml",
             "MODEL_SPEC.md",
             "MODEL_SPEC_V1_1.md",
             f"manifests/model_{policy['model_version']}_development.json",
