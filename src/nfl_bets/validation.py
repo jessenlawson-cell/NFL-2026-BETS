@@ -285,7 +285,11 @@ def _validate_v11(settings: Settings) -> dict[str, Any]:
 
     candidates: dict[str, Any] = {}
     spec_path = settings.root / "MODEL_SPEC_V1_1.md"
-    current_spec_hash = sha256_bytes(spec_path.read_bytes()) if spec_path.exists() else None
+    current_spec_hash = (
+        sha256_bytes(spec_path.read_bytes().replace(b"\r\n", b"\n"))
+        if spec_path.exists()
+        else None
+    )
     for model_manifest_path in sorted(settings.manifests_dir.glob("model_1.1.*_development.json")):
         model = json.loads(model_manifest_path.read_text(encoding="utf-8"))
         version = str(model["model_version"])
@@ -349,7 +353,9 @@ def _validate_prospective(
     checks = {
         "artifact_hash": sha256_bytes(artifact_path.read_bytes()),
         "metadata_hash": sha256_bytes(metadata_path.read_bytes()),
-        "spec_hash": sha256_bytes((settings.root / "MODEL_SPEC_V1_1.md").read_bytes()),
+        "spec_hash": sha256_bytes(
+            (settings.root / "MODEL_SPEC_V1_1.md").read_bytes().replace(b"\r\n", b"\n")
+        ),
         "development_feature_hash": model_manifest.get("development_feature_hash"),
         "prospective_start_utc": model_manifest.get("prospective_start_utc"),
     }
