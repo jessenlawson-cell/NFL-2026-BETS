@@ -41,19 +41,55 @@ CREATE TABLE IF NOT EXISTS raw_snapshots (
 
 CREATE TABLE IF NOT EXISTS api_requests (
     request_id TEXT PRIMARY KEY,
+    idempotency_key TEXT,
+    attempt_number INTEGER,
     slot TEXT NOT NULL,
     request_kind TEXT NOT NULL,
     week_bucket TEXT NOT NULL,
     started_at_utc TEXT NOT NULL,
+    provider_call_started_at_utc TEXT,
+    provider_response_received_at_utc TEXT,
     completed_at_utc TEXT,
     status TEXT NOT NULL,
     http_status INTEGER,
+    provider_request_id TEXT,
     provider_requests_used INTEGER,
     provider_requests_remaining INTEGER,
     provider_requests_last INTEGER,
     raw_snapshot_id TEXT,
+    reconciliation_status TEXT NOT NULL DEFAULT 'NOT_REQUIRED',
     error_message TEXT,
     FOREIGN KEY(raw_snapshot_id) REFERENCES raw_snapshots(snapshot_id)
+);
+
+CREATE TABLE IF NOT EXISTS capture_reservations (
+    idempotency_key TEXT PRIMARY KEY,
+    week_bucket TEXT NOT NULL,
+    slot TEXT NOT NULL,
+    request_kind TEXT NOT NULL,
+    created_at_utc TEXT NOT NULL,
+    updated_at_utc TEXT NOT NULL,
+    status TEXT NOT NULL,
+    active_request_id TEXT,
+    provider_call_count INTEGER NOT NULL DEFAULT 0 CHECK(provider_call_count >= 0),
+    reservation_conflicts INTEGER NOT NULL DEFAULT 0 CHECK(reservation_conflicts >= 0),
+    reconciliation_status TEXT NOT NULL DEFAULT 'NOT_REQUIRED',
+    reconciled_at_utc TEXT,
+    reconciliation_note TEXT,
+    UNIQUE(week_bucket, slot, request_kind),
+    FOREIGN KEY(active_request_id) REFERENCES api_requests(request_id)
+);
+
+CREATE TABLE IF NOT EXISTS capture_reconciliations (
+    reconciliation_id TEXT PRIMARY KEY,
+    idempotency_key TEXT NOT NULL,
+    request_id TEXT NOT NULL,
+    recorded_at_utc TEXT NOT NULL,
+    resolution TEXT NOT NULL,
+    note TEXT NOT NULL,
+    source TEXT NOT NULL,
+    FOREIGN KEY(idempotency_key) REFERENCES capture_reservations(idempotency_key),
+    FOREIGN KEY(request_id) REFERENCES api_requests(request_id)
 );
 
 CREATE TABLE IF NOT EXISTS games (
@@ -219,6 +255,10 @@ CREATE TABLE IF NOT EXISTS prospective_test_registry (
 CREATE INDEX IF NOT EXISTS idx_games_season_week ON games(season, week);
 CREATE INDEX IF NOT EXISTS idx_market_odds_game ON market_odds(game_id, market);
 CREATE INDEX IF NOT EXISTS idx_api_requests_week ON api_requests(week_bucket, started_at_utc);
+CREATE INDEX IF NOT EXISTS idx_capture_reservations_week
+ON capture_reservations(week_bucket, slot);
+CREATE INDEX IF NOT EXISTS idx_capture_reconciliations_key
+ON capture_reconciliations(idempotency_key, recorded_at_utc);
 CREATE INDEX IF NOT EXISTS idx_predictions_snapshot ON model_predictions(snapshot_id);
 CREATE INDEX IF NOT EXISTS idx_predictions_game
 ON model_predictions(model_version, game_id, market);
@@ -247,10 +287,121 @@ def transaction(settings: Settings | None = None) -> Iterator[sqlite3.Connection
         connection.close()
 
 
+@contextmanager
+def immediate_transaction(settings: Settings | None = None) -> Iterator[sqlite3.Connection]:
+    """Acquire SQLite's write reservation before exposing mutable state to a caller."""
+    connection = connect(settings)
+    try:
+        connection.execute("BEGIN IMMEDIATE")
+        try:
+            yield connection
+        except BaseException:
+            connection.rollback()
+            raise
+        else:
+            connection.commit()
+    finally:
+        connection.close()
+
+
+CAPTURE_REQUEST_COLUMNS = {
+    "idempotency_key": "TEXT",
+    "attempt_number": "INTEGER",
+    "provider_call_started_at_utc": "TEXT",
+    "provider_response_received_at_utc": "TEXT",
+    "provider_request_id": "TEXT",
+    "reconciliation_status": "TEXT NOT NULL DEFAULT 'NOT_REQUIRED'",
+}
+
+
+def _migrate_capture_idempotency(connection: sqlite3.Connection) -> None:
+    existing = set(table_columns(connection, "api_requests"))
+    for name, declaration in CAPTURE_REQUEST_COLUMNS.items():
+        if name not in existing:
+            connection.execute(f"ALTER TABLE api_requests ADD COLUMN {name} {declaration}")
+    legacy_duplicates = connection.execute(
+        "SELECT week_bucket,slot,request_kind,COUNT(*) AS count FROM api_requests "
+        "WHERE slot!='manual' AND idempotency_key IS NULL "
+        "GROUP BY week_bucket,slot,request_kind HAVING COUNT(*)>1"
+    ).fetchall()
+    if legacy_duplicates:
+        raise RuntimeError(
+            "Legacy scheduled captures contain duplicate slot keys; reconcile them before migration"
+        )
+    legacy_attempts = connection.execute(
+        "SELECT * FROM api_requests WHERE slot!='manual' AND idempotency_key IS NULL"
+    ).fetchall()
+    for row in legacy_attempts:
+        key = (
+            f"scheduled-capture:v1:{row['week_bucket']}:{row['slot']}:{row['request_kind']}"
+        )
+        if row["status"] == "COMPLETE":
+            reservation_status = "COMPLETE"
+            reconciliation_status = "NOT_REQUIRED"
+        elif row["status"] in {"RAW_SAVED", "HTTP_FAILED", "PARSE_FAILED"}:
+            reservation_status = "CLOSED_NO_RETRY"
+            reconciliation_status = "NO_RETRY_RAW_SAVED"
+        else:
+            reservation_status = "RECONCILIATION_REQUIRED"
+            reconciliation_status = "LEGACY_PROVIDER_CHECK_REQUIRED"
+        connection.execute(
+            "UPDATE api_requests SET idempotency_key=?,attempt_number=1,"
+            "reconciliation_status=? WHERE request_id=?",
+            (key, reconciliation_status, row["request_id"]),
+        )
+        connection.execute(
+            "INSERT INTO capture_reservations("
+            "idempotency_key,week_bucket,slot,request_kind,created_at_utc,updated_at_utc,"
+            "status,active_request_id,reconciliation_status) VALUES (?,?,?,?,?,?,?,?,?)",
+            (
+                key,
+                row["week_bucket"],
+                row["slot"],
+                row["request_kind"],
+                row["started_at_utc"],
+                row["completed_at_utc"] or row["started_at_utc"],
+                reservation_status,
+                row["request_id"],
+                reconciliation_status,
+            ),
+        )
+    connection.execute(
+        "UPDATE api_requests SET provider_call_started_at_utc=started_at_utc "
+        "WHERE idempotency_key IS NOT NULL AND provider_call_started_at_utc IS NULL "
+        "AND (raw_snapshot_id IS NOT NULL OR http_status IS NOT NULL "
+        "OR status IN ('AMBIGUOUS_FAILURE','RAW_SAVED','HTTP_FAILED','PARSE_FAILED','COMPLETE'))"
+    )
+    connection.execute(
+        "UPDATE api_requests SET provider_response_received_at_utc=completed_at_utc "
+        "WHERE idempotency_key IS NOT NULL AND provider_response_received_at_utc IS NULL "
+        "AND completed_at_utc IS NOT NULL AND (raw_snapshot_id IS NOT NULL "
+        "OR http_status IS NOT NULL "
+        "OR status IN ('RAW_SAVED','HTTP_FAILED','PARSE_FAILED','COMPLETE'))"
+    )
+    connection.execute(
+        "UPDATE capture_reservations SET provider_call_count=("
+        "SELECT COUNT(*) FROM api_requests a "
+        "WHERE a.idempotency_key=capture_reservations.idempotency_key "
+        "AND a.provider_call_started_at_utc IS NOT NULL)"
+    )
+    connection.execute(
+        "CREATE UNIQUE INDEX IF NOT EXISTS uq_api_requests_capture_attempt "
+        "ON api_requests(idempotency_key, attempt_number) "
+        "WHERE idempotency_key IS NOT NULL"
+    )
+    connection.execute(
+        "INSERT OR IGNORE INTO schema_migrations(version, applied_at_utc) "
+        "VALUES ('observer-capture-idempotency-1.0.0', "
+        "strftime('%Y-%m-%dT%H:%M:%fZ','now'))"
+    )
+
+
 def initialize_database(settings: Settings | None = None) -> Path:
     resolved = settings or get_settings()
     with connect(resolved) as connection:
         connection.executescript(SCHEMA_SQL)
+        connection.commit()
+        connection.execute("BEGIN IMMEDIATE")
         connection.execute(
             "INSERT OR IGNORE INTO schema_migrations(version, applied_at_utc) "
             "VALUES ('1.0.0', strftime('%Y-%m-%dT%H:%M:%fZ','now'))"
@@ -259,6 +410,8 @@ def initialize_database(settings: Settings | None = None) -> Path:
             "INSERT OR IGNORE INTO schema_migrations(version, applied_at_utc) "
             "VALUES ('1.1.0', strftime('%Y-%m-%dT%H:%M:%fZ','now'))"
         )
+        _migrate_capture_idempotency(connection)
+        connection.commit()
     return resolved.db_path
 
 

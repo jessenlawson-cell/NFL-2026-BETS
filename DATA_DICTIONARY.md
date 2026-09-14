@@ -92,7 +92,17 @@ in 2025. The authoritative root CSVs remain unchanged; V1.1 does not overwrite V
 
 ## Operational SQLite tables
 
-`ingestion_runs`, `raw_snapshots`, `api_requests`, `market_consensus`, `model_test_registry`, and
-`prospective_test_registry` and `schema_migrations` provide provenance, quota accounting,
-consensus diagnostics, one-time test enforcement, and migration history. They are local
-infrastructure rather than authoritative CSVs.
+`ingestion_runs`, `raw_snapshots`, `api_requests`, `capture_reservations`,
+`capture_reconciliations`, `market_consensus`, `model_test_registry`,
+`prospective_test_registry`, and `schema_migrations` provide provenance, quota accounting,
+paid-call reconciliation, consensus diagnostics, one-time test enforcement, and migration history.
+They are local infrastructure rather than authoritative CSVs.
+
+`capture_reservations` has one durable row per (`week_bucket`, `slot`, `request_kind`). Its stable
+`idempotency_key` is unique, and the reservation is acquired with an immediate SQLite transaction
+before a provider call can start. `api_requests` stores append-only attempts under that key,
+including attempt number, durable provider-call and response timestamps, sanitized provider request
+identifier, raw snapshot identity, and reconciliation status. `capture_reconciliations` is the
+append-only operator/provider evidence ledger. A retry is possible only after an operator records
+either that no call started or that the provider confirmed the ambiguous attempt was not billed.
+Responses and confirmed billed attempts are never retried.

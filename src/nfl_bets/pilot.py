@@ -8,7 +8,13 @@ from typing import Any
 
 from nfl_bets.config import Settings, get_settings
 from nfl_bets.db import connect, initialize_database
-from nfl_bets.odds.client import SCHEDULED_SLOTS, _week_bucket, snapshot_odds
+from nfl_bets.odds.client import (
+    SCHEDULED_SLOTS,
+    _week_bucket,
+    capture_reconciliation_status,
+    reconcile_scheduled_capture,
+    snapshot_odds,
+)
 from nfl_bets.prospective import DEFAULT_MODEL_VERSION, load_frozen_bundle, predict_snapshot
 from nfl_bets.util import atomic_write_text, sha256_bytes
 
@@ -20,6 +26,8 @@ PREFLIGHT_REQUIRED_FILES = (
 )
 PREFLIGHT_REQUIRED_TABLES = {
     "api_requests",
+    "capture_reconciliations",
+    "capture_reservations",
     "games",
     "market_odds",
     "model_predictions",
@@ -181,17 +189,32 @@ def preflight_pilot(
                 provider_blocking = True
                 provider_detail = f"Last recorded provider balance: {provider_remaining} credits."
             if slot_ok and slot is not None:
-                duplicate = connection.execute(
-                    "SELECT 1 FROM api_requests WHERE week_bucket=? AND slot=? "
-                    "AND status='COMPLETE' LIMIT 1",
+                reservation = connection.execute(
+                    "SELECT status,reconciliation_status FROM capture_reservations "
+                    "WHERE week_bucket=? AND slot=? AND request_kind='full-board'",
                     (bucket, slot),
                 ).fetchone()
-                duplicate_ok = duplicate is None
-                duplicate_detail = (
-                    "No completed capture exists for this slot."
-                    if duplicate_ok
-                    else "This slot is already complete; do not spend credits twice."
-                )
+                if reservation is None:
+                    legacy = connection.execute(
+                        "SELECT status FROM api_requests WHERE week_bucket=? AND slot=? LIMIT 1",
+                        (bucket, slot),
+                    ).fetchone()
+                    duplicate_ok = legacy is None
+                    duplicate_detail = (
+                        "No reservation exists for this slot."
+                        if duplicate_ok
+                        else "A legacy capture exists for this slot; do not spend credits twice."
+                    )
+                else:
+                    duplicate_ok = reservation["status"] == "RETRY_AUTHORIZED"
+                    duplicate_detail = (
+                        "An operator-authorized reconciled retry is ready."
+                        if duplicate_ok
+                        else (
+                            f"Slot reservation is {reservation['status']} "
+                            f"({reservation['reconciliation_status']}); do not call the provider."
+                        )
+                    )
     except Exception as exc:  # converted to a safe readiness result
         database_detail = f"Database check failed: {type(exc).__name__}."
     checks.extend(
@@ -249,6 +272,26 @@ def capture_pilot_slot(
         "decision": "PASS",
         "automatic_retry": False,
     }
+
+
+def reconcile_pilot_slot(
+    slot: str,
+    week_bucket: str,
+    resolution: str | None = None,
+    note: str | None = None,
+    settings: Settings | None = None,
+) -> dict[str, Any]:
+    """Inspect or explicitly reconcile one scheduled capture without provider contact."""
+    resolved = settings or get_settings()
+    if resolution is None:
+        return capture_reconciliation_status(slot, week_bucket, resolved)
+    return reconcile_scheduled_capture(
+        slot,
+        week_bucket,
+        resolution,
+        note or "",
+        resolved,
+    )
 
 
 def _snapshot_is_intact(row: dict[str, Any]) -> bool:
@@ -321,6 +364,21 @@ def pilot_status(
                 "predictions": prediction_count,
                 "non_pass_decisions": non_pass,
             }
+        reservation_summary = {
+            str(row["status"]): int(row["count"])
+            for row in connection.execute(
+                "SELECT status,COUNT(*) AS count FROM capture_reservations "
+                "WHERE week_bucket=? GROUP BY status ORDER BY status",
+                (bucket,),
+            )
+        }
+        reservation_conflicts = int(
+            connection.execute(
+                "SELECT COALESCE(SUM(reservation_conflicts),0) FROM capture_reservations "
+                "WHERE week_bucket=?",
+                (bucket,),
+            ).fetchone()[0]
+        )
     passed_slots = sum(1 for value in slots.values() if value["status"] == "PASSED")
     status = "PASSED" if passed_slots == len(SCHEDULED_SLOTS) else "INCOMPLETE"
     report = {
@@ -331,6 +389,8 @@ def pilot_status(
         "required_slots": len(SCHEDULED_SLOTS),
         "passed_slots": passed_slots,
         "failed_attempts": failed_attempts,
+        "reservation_statuses": reservation_summary,
+        "reservation_conflicts": reservation_conflicts,
         "automatic_retry": False,
         "decision_policy": "PASS-only",
         "slots": slots,

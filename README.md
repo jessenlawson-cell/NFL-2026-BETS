@@ -71,6 +71,11 @@ The live odds command requires `THE_ODDS_API_KEY`. It makes one consolidated boa
 persists the raw response before parsing, records quota headers, and never retries an ambiguous
 network failure.
 
+Configured scheduled slots are protected by a stable weekly idempotency key. The application
+commits a unique SQLite reservation before any provider call and records the call-start boundary,
+response receipt, sanitized provider request identifier, and terminal state. Duplicate or
+concurrent launches fail before contacting the provider.
+
 Data synchronization downloads nflverse one season at a time, validates a run in `data/staging/`,
 and promotes only complete authoritative exports. `features build` stores explicit lag-1 through
 lag-4 inputs; `model train` selects the half-life and prior shrinkage chronologically before writing
@@ -103,12 +108,20 @@ with:
 ```powershell
 docker compose run --rm nfl-bets pilot preflight --slot monday_1200
 docker compose run --rm nfl-bets pilot status --week-bucket 2026-09-15
+docker compose run --rm nfl-bets pilot reconcile --slot monday_1200 `
+  --week-bucket 2026-09-15
 ```
 
 `pilot preflight` contacts no provider and spends no credits. It returns `READY` only when the
 Docker runtime, local paths, hidden API-key presence, SQLite database, frozen model identity,
 schedule, local quota, and duplicate-slot guard all pass. A provider balance is checked when a
 previous response has supplied one; otherwise it is reported as a non-blocking warning.
+
+`pilot reconcile` without a resolution is read-only and never contacts the provider. After a
+failed attempt, record a resolution only from verified local/provider evidence. The allowed
+resolutions are `SAFE_TO_RETRY_NO_CALL`, `PROVIDER_CONFIRMED_NOT_BILLED`, and
+`PROVIDER_CONFIRMED_BILLED`; every resolution requires `--note`. No retry is automatic. See
+`SEQUENCE_2_CAPTURE_IDEMPOTENCY.md` for the failure-phase rules.
 
 Only after that report says `PASSED` may the Windows tasks be installed:
 

@@ -14,7 +14,12 @@ from nfl_bets.features.v11 import build_v11_features
 from nfl_bets.model.training import test_model, train_model
 from nfl_bets.model.v11 import train_v11_model
 from nfl_bets.odds.client import snapshot_odds
-from nfl_bets.pilot import capture_pilot_slot, pilot_status, preflight_pilot
+from nfl_bets.pilot import (
+    capture_pilot_slot,
+    pilot_status,
+    preflight_pilot,
+    reconcile_pilot_slot,
+)
 from nfl_bets.prospective import (
     predict_snapshot,
     run_prospective_test,
@@ -190,6 +195,39 @@ def pilot_preflight(
 ) -> None:
     """Check capture readiness without contacting the odds provider or spending credits."""
     _print_result(preflight_pilot(slot=slot, version=version))
+
+
+@pilot_app.command("reconcile")
+def pilot_reconcile(
+    slot: Annotated[str, typer.Option("--slot", help="One configured weekly slot name.")],
+    week_bucket: Annotated[
+        str,
+        typer.Option("--week-bucket", help="Tuesday-start date, for example 2026-09-15."),
+    ],
+    resolution: Annotated[
+        str | None,
+        typer.Option(
+            "--resolution",
+            help=(
+                "Optional explicit resolution: SAFE_TO_RETRY_NO_CALL, "
+                "PROVIDER_CONFIRMED_NOT_BILLED, or PROVIDER_CONFIRMED_BILLED."
+            ),
+        ),
+    ] = None,
+    note: Annotated[
+        str | None,
+        typer.Option("--note", help="Required operator/provider evidence when resolving."),
+    ] = None,
+) -> None:
+    """Inspect or reconcile a capture; this command never contacts the provider."""
+    _print_result(
+        reconcile_pilot_slot(
+            slot=slot,
+            week_bucket=week_bucket,
+            resolution=resolution,
+            note=note,
+        )
+    )
 
 
 @pilot_app.command("status")

@@ -463,6 +463,86 @@ def _validate_prospective(
     }
 
 
+def _validate_capture_idempotency(settings: Settings) -> dict[str, Any]:
+    with connect(settings) as connection:
+        duplicate_keys = connection.execute(
+            "SELECT week_bucket,slot,request_kind,COUNT(*) AS count "
+            "FROM capture_reservations GROUP BY week_bucket,slot,request_kind "
+            "HAVING COUNT(*)>1"
+        ).fetchall()
+        if duplicate_keys:
+            raise DataQualityError("Scheduled capture reservations contain duplicate slot keys")
+        orphan_attempts = connection.execute(
+            "SELECT a.request_id FROM api_requests a LEFT JOIN capture_reservations r "
+            "ON r.idempotency_key=a.idempotency_key "
+            "WHERE a.idempotency_key IS NOT NULL AND r.idempotency_key IS NULL"
+        ).fetchall()
+        if orphan_attempts:
+            raise DataQualityError("Scheduled capture attempts lack a durable reservation")
+        orphan_reconciliations = connection.execute(
+            "SELECT c.reconciliation_id FROM capture_reconciliations c "
+            "LEFT JOIN capture_reservations r ON r.idempotency_key=c.idempotency_key "
+            "LEFT JOIN api_requests a ON a.request_id=c.request_id "
+            "WHERE r.idempotency_key IS NULL OR a.request_id IS NULL "
+            "OR a.idempotency_key!=c.idempotency_key"
+        ).fetchall()
+        if orphan_reconciliations:
+            raise DataQualityError("Capture reconciliation history has invalid provenance links")
+        mismatched = connection.execute(
+            "SELECT r.idempotency_key FROM capture_reservations r "
+            "LEFT JOIN api_requests a ON a.request_id=r.active_request_id "
+            "WHERE a.request_id IS NULL OR a.idempotency_key!=r.idempotency_key"
+        ).fetchall()
+        if mismatched:
+            raise DataQualityError("Scheduled capture active-attempt linkage is invalid")
+        call_mismatches = connection.execute(
+            "SELECT r.idempotency_key FROM capture_reservations r WHERE r.provider_call_count != "
+            "(SELECT COUNT(*) FROM api_requests a WHERE a.idempotency_key=r.idempotency_key "
+            "AND a.provider_call_started_at_utc IS NOT NULL)"
+        ).fetchall()
+        if call_mismatches:
+            raise DataQualityError("Scheduled capture provider-call counts do not reconcile")
+        invalid_retries = connection.execute(
+            "SELECT r.idempotency_key FROM capture_reservations r JOIN api_requests a "
+            "ON a.request_id=r.active_request_id WHERE r.status='RETRY_AUTHORIZED' "
+            "AND a.status NOT IN ('ABANDONED_NO_CALL','RECONCILED_NOT_BILLED')"
+        ).fetchall()
+        if invalid_retries:
+            raise DataQualityError("Scheduled capture retry lacks an eligible reconciliation")
+        reservations = int(
+            connection.execute("SELECT COUNT(*) FROM capture_reservations").fetchone()[0]
+        )
+        provider_calls = int(
+            connection.execute(
+                "SELECT COUNT(*) FROM api_requests "
+                "WHERE idempotency_key IS NOT NULL AND provider_call_started_at_utc IS NOT NULL"
+            ).fetchone()[0]
+        )
+        conflicts = int(
+            connection.execute(
+                "SELECT COALESCE(SUM(reservation_conflicts),0) FROM capture_reservations"
+            ).fetchone()[0]
+        )
+        reconciliation_required = int(
+            connection.execute(
+                "SELECT COUNT(*) FROM capture_reservations "
+                "WHERE status='RECONCILIATION_REQUIRED'"
+            ).fetchone()[0]
+        )
+        reconciliation_events = int(
+            connection.execute("SELECT COUNT(*) FROM capture_reconciliations").fetchone()[0]
+        )
+    return {
+        "status": "VALID",
+        "reservations": reservations,
+        "provider_calls": provider_calls,
+        "reservation_conflicts": conflicts,
+        "reconciliation_required": reconciliation_required,
+        "reconciliation_events": reconciliation_events,
+        "automatic_retry": False,
+    }
+
+
 def validate_all(settings: Settings | None = None) -> dict[str, Any]:
     resolved = settings or get_settings()
     initialize_database(resolved)
@@ -574,5 +654,6 @@ def validate_all(settings: Settings | None = None) -> dict[str, Any]:
         loaded["model_predictions"],
         loaded["prospective_evaluations"],
     )
+    results["capture_idempotency"] = _validate_capture_idempotency(resolved)
     results["status"] = "VALID"
     return results
