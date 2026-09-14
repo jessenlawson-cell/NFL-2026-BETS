@@ -1,0 +1,101 @@
+{
+  "candidate_artifact_hash": "d79183f76c223e0de316f604aa45523f60220bec681106c2ac91830f51901201",
+  "completed_at_utc": "2026-09-14T01:27:23.538970Z",
+  "development_feature_hash": "f1f3b0575525076dcd3393a521aecca7cddb241650052ea256836c2f5711e49f",
+  "input_hash": "82529d51f9b2c6d4e16d02b2fd6fdb589604677c434f0c2a9930e06896249740",
+  "model_version": "1.0.1",
+  "policy": "The 2025 result is consumed once and cannot tune V1.",
+  "promotion_gates": {
+    "spread_brier_beats_market": false,
+    "spread_calibration_acceptable": false,
+    "spread_log_loss_beats_market": false,
+    "total_brier_beats_market": true,
+    "total_calibration_acceptable": false,
+    "total_log_loss_beats_market": true
+  },
+  "promotion_rule": "Both Brier and log loss must beat no-vig close for both markets with calibration intercept within +/-0.20 and slope from 0.50 through 1.50.",
+  "rows": 272,
+  "spread": {
+    "calibration": {
+      "intercept": 0.09574213448020423,
+      "slope": 2.735848052013035
+    },
+    "candidate": {
+      "brier": 0.24959501188064992,
+      "log_loss": 0.6923374864635036
+    },
+    "market": {
+      "brier": 0.2495867131268083,
+      "log_loss": 0.6923205180550218,
+      "mae": 9.722426470588236,
+      "rmse": 12.271177672521421
+    },
+    "market_regressed": {
+      "mae": 9.722426470588236,
+      "rmse": 12.271177672521421
+    },
+    "non_push_rows": 271,
+    "push_rows": 1,
+    "raw": {
+      "mae": 10.118193247280074,
+      "rmse": 13.10835015491221
+    },
+    "reliability": [
+      {
+        "bin": 5,
+        "count": 205,
+        "mean_probability": 0.48559894699574213,
+        "observed_rate": 0.48292682926829267
+      },
+      {
+        "bin": 6,
+        "count": 66,
+        "mean_probability": 0.5060788604821145,
+        "observed_rate": 0.5454545454545454
+      }
+    ]
+  },
+  "started_at_utc": "2026-09-14T01:27:23.286232Z",
+  "status": "PASS_ONLY",
+  "test_season": 2025,
+  "total": {
+    "calibration": {
+      "intercept": 0.17098627825283408,
+      "slope": 1.7418335617934926
+    },
+    "candidate": {
+      "brier": 0.25028313560992355,
+      "log_loss": 0.6937141090427633
+    },
+    "market": {
+      "brier": 0.2504056398371012,
+      "log_loss": 0.6939590876085664,
+      "mae": 10.393382352941176,
+      "rmse": 13.18644580397525
+    },
+    "market_regressed": {
+      "mae": 10.393382352941176,
+      "rmse": 13.18644580397525
+    },
+    "non_push_rows": 272,
+    "push_rows": 0,
+    "raw": {
+      "mae": 10.777766996071561,
+      "rmse": 13.633077824833865
+    },
+    "reliability": [
+      {
+        "bin": 5,
+        "count": 191,
+        "mean_probability": 0.48274204765893153,
+        "observed_rate": 0.5130890052356021
+      },
+      {
+        "bin": 6,
+        "count": 81,
+        "mean_probability": 0.5009338335020888,
+        "observed_rate": 0.5432098765432098
+      }
+    ]
+  }
+}

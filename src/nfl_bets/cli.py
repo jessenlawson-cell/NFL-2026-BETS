@@ -10,7 +10,9 @@ from rich.console import Console
 from nfl_bets.data.sync import sync_data
 from nfl_bets.db import initialize_database
 from nfl_bets.features.build import build_features
+from nfl_bets.features.v11 import build_v11_features
 from nfl_bets.model.training import test_model, train_model
+from nfl_bets.model.v11 import train_v11_model
 from nfl_bets.odds.client import snapshot_odds
 from nfl_bets.validation import validate_all
 
@@ -24,11 +26,17 @@ features_app = typer.Typer(help="Build leakage-safe pregame features.", no_args_
 model_app = typer.Typer(help="Train and test frozen model candidates.", no_args_is_help=True)
 odds_app = typer.Typer(help="Capture and normalize live market boards.", no_args_is_help=True)
 db_app = typer.Typer(help="Initialize local persistence.", no_args_is_help=True)
+v11_app = typer.Typer(help="Develop the post-V1 prospective model.", no_args_is_help=True)
+v11_features_app = typer.Typer(help="Build V1.1 feature inputs.", no_args_is_help=True)
+v11_model_app = typer.Typer(help="Freeze V1.1 candidates.", no_args_is_help=True)
 app.add_typer(data_app, name="data")
 app.add_typer(features_app, name="features")
 app.add_typer(model_app, name="model")
 app.add_typer(odds_app, name="odds")
 app.add_typer(db_app, name="db")
+app.add_typer(v11_app, name="v11")
+v11_app.add_typer(v11_features_app, name="features")
+v11_app.add_typer(v11_model_app, name="model")
 console = Console()
 
 
@@ -61,11 +69,10 @@ def features_build(
         str,
         typer.Option("--as-of", help="Timezone-aware ISO-8601 information cutoff."),
     ],
-    half_life: Annotated[float, typer.Option("--half-life")] = 2.0,
 ) -> None:
-    """Build four-game, shift(1)-guarded Polars EWMA team snapshots."""
+    """Build explicit lag-1 through lag-4 development feature inputs."""
     parsed_as_of = datetime.fromisoformat(as_of.replace("Z", "+00:00"))
-    _print_result(build_features(as_of=parsed_as_of, half_life=half_life))
+    _print_result(build_features(as_of=parsed_as_of))
 
 
 @model_app.command("train")
@@ -78,11 +85,34 @@ def model_train(
 
 @model_app.command("test")
 def model_test(
+    version: Annotated[
+        str,
+        typer.Option("--version", help="Exact immutable candidate version to test."),
+    ],
     season: Annotated[int, typer.Option("--season")] = 2025,
-    version: Annotated[str, typer.Option("--version")] = "1.0.0",
 ) -> None:
     """Consume the untouched 2025 test once and apply the strict promotion gate."""
     _print_result(test_model(version=version, season=season))
+
+
+@v11_features_app.command("build")
+def v11_features_build(
+    as_of: Annotated[
+        str,
+        typer.Option("--as-of", help="Timezone-aware ISO-8601 information cutoff."),
+    ],
+) -> None:
+    """Build leakage-safe V1.1 trench, neutral-rush, and continuity inputs."""
+    parsed_as_of = datetime.fromisoformat(as_of.replace("Z", "+00:00"))
+    _print_result(build_v11_features(as_of=parsed_as_of))
+
+
+@v11_model_app.command("train")
+def v11_model_train(
+    version: Annotated[str, typer.Option("--version", help="Immutable 1.1.x version.")],
+) -> None:
+    """Develop through 2025 and freeze a candidate for post-freeze 2026 evaluation."""
+    _print_result(train_v11_model(version))
 
 
 @odds_app.command("snapshot")

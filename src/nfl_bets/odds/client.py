@@ -146,7 +146,7 @@ def _persist_parsed(parsed: ParsedBoard, settings: Settings) -> None:
         else pl.DataFrame({c: [] for c in quote_columns})
     )
     atomic_write_text(settings.root / "market_odds.csv", frame.write_csv())
-    atomic_write_text(settings.curated_dir / "market_odds.csv", frame.write_csv())
+    atomic_write_text(settings.root / "market_odds.csv", frame.write_csv())
 
 
 def snapshot_odds(

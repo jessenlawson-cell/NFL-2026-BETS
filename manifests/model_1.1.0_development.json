@@ -1,0 +1,14 @@
+{
+  "artifact": "artifacts/models/1.1.0/candidate.joblib",
+  "artifact_hash": "e961ccb8054fa878b3b60cb99225e514afc09c2473b15aa5f08c039da22b1f4a",
+  "development_end_season": 2025,
+  "development_feature_hash": "70b9b68910f27223b233830d9d0354cce128dce5bf39ef4fcd175d576bc8d64f",
+  "feature_input_hash": "82bca56d8369d41212515d7d08351e32507304744e010ef5f39ea4798e22d302",
+  "metadata_hash": "e3296735c30d10596eb0c53eae3980641a590be067a0f4d7734c4f6d0d5055d1",
+  "model_version": "1.1.0",
+  "prospective_start_utc": "2026-09-14T01:46:58.707696Z",
+  "prospective_test_season": 2026,
+  "schema_version": "1.0.0",
+  "spec_hash": "dba87c9fbdb6f93346cf39e6012fc0d82410d92f4d887a648bc0dcdb191ba394",
+  "status": "LOCKED_UNTESTED_2026"
+}

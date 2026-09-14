@@ -1,0 +1,7 @@
+gate,passed
+spread_brier_beats_market,false
+spread_log_loss_beats_market,false
+spread_calibration_acceptable,false
+total_brier_beats_market,true
+total_log_loss_beats_market,true
+total_calibration_acceptable,false

@@ -11,17 +11,14 @@ services:
       NFL_BETS_DATA_DIR: /workspace/data
       NFL_BETS_CACHE_DIR: /workspace/data/cache/nflreadpy
       NFL_BETS_RAW_DIR: /workspace/data/raw
-      NFL_BETS_CURATED_DIR: /workspace/data/curated
+      NFL_BETS_STAGING_DIR: /workspace/data/staging
       NFL_BETS_RUNTIME_DIR: /workspace/data/runtime
       NFL_BETS_ARTIFACTS_DIR: /workspace/artifacts
       NFL_BETS_REPORTS_DIR: /workspace/reports
+      NFL_BETS_MANIFESTS_DIR: /workspace/manifests
       NFL_BETS_DB_PATH: /workspace/data/runtime/nfl_bets.sqlite3
       THE_ODDS_API_KEY: ${THE_ODDS_API_KEY:-}
     volumes:
-      - ./data:/workspace/data
-      - ./artifacts:/workspace/artifacts
-      - ./reports:/workspace/reports
-      - ./logs:/workspace/logs
+      - ./:/workspace
     working_dir: /workspace
     command: ["--help"]
-

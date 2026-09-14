@@ -6,7 +6,7 @@ from nfl_bets.schemas import ARTIFACT_SCHEMAS
 
 
 def test_authoritative_tables_match_csv_contracts(tmp_path) -> None:
-    settings = Settings(root=tmp_path)
+    settings = Settings.for_root(tmp_path)
     initialize_database(settings)
     with connect(settings) as connection:
         for name, schema in ARTIFACT_SCHEMAS.items():

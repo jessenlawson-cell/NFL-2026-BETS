@@ -13,10 +13,13 @@ __pycache__/
 data/cache/**
 data/raw/**
 data/runtime/**
+data/staging/**
 artifacts/models/**
 logs/**
+outputs/**
 .coverage
 htmlcov/
+.codex_tmp/
 
 # Retain the intended directory tree without tracking runtime payloads.
 !data/cache/.gitkeep
@@ -28,5 +31,6 @@ htmlcov/
 !data/raw/odds/
 !data/raw/odds/.gitkeep
 !data/runtime/.gitkeep
+!data/staging/.gitkeep
 !artifacts/models/.gitkeep
 !logs/.gitkeep

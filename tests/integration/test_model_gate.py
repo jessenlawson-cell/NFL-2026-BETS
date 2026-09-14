@@ -6,6 +6,7 @@ import polars as pl
 import pytest
 
 from nfl_bets.config import Settings
+from nfl_bets.db import connect
 from nfl_bets.features.build import METRICS
 from nfl_bets.model.training import test_model as run_model_test
 from nfl_bets.model.training import train_model
@@ -62,10 +63,51 @@ def _write_synthetic_history(settings: Settings) -> None:
 
 
 def test_untouched_gate_defaults_to_pass_only_and_cannot_be_repeated(tmp_path) -> None:
-    settings = Settings(root=tmp_path)
+    settings = Settings.for_root(tmp_path)
     _write_synthetic_history(settings)
     train_model("fixture-v1", settings)
+    with connect(settings) as connection:
+        assert connection.execute("SELECT COUNT(*) FROM model_test_registry").fetchone()[0] == 0
     report = run_model_test("fixture-v1", 2025, settings)
     assert report["status"] == "PASS_ONLY"
+    assert report["input_hash"]
+    assert not all(report["promotion_gates"].values())
+    assert (settings.reports_dir / "model_fixture-v1_test_2025.json").exists()
+    assert (settings.reports_dir / "model_fixture-v1_test_2025.html").exists()
+    assert (settings.reports_dir / "model_fixture-v1_test_2025_games.csv").exists()
+    assert (settings.reports_dir / "model_fixture-v1_test_2025_gates.csv").exists()
+    assert (settings.manifests_dir / "model_fixture-v1_test_2025.json").exists()
+    assert (settings.artifacts_dir / "models" / "fixture-v1" / "promotion.json").exists()
+    with connect(settings) as connection:
+        registry = connection.execute(
+            "SELECT status,error_message FROM model_test_registry"
+        ).fetchone()
+    assert registry["status"] == "PASS_ONLY"
+    assert registry["error_message"] is None
     with pytest.raises(RuntimeError, match="already consumed"):
         run_model_test("fixture-v1", 2025, settings)
+
+
+def test_failed_test_attempt_is_permanently_recorded(tmp_path) -> None:
+    settings = Settings.for_root(tmp_path)
+    _write_synthetic_history(settings)
+    train_model("fixture-failure", settings)
+    games = pl.read_csv(settings.root / "games.csv")
+    games = games.with_columns(
+        pl.when(pl.col("season") == 2025)
+        .then(pl.lit(0))
+        .otherwise(pl.col("home_spread_odds"))
+        .alias("home_spread_odds")
+    )
+    games.write_csv(settings.root / "games.csv")
+
+    with pytest.raises(ValueError, match="probabilities"):
+        run_model_test("fixture-failure", 2025, settings)
+    with connect(settings) as connection:
+        registry = connection.execute(
+            "SELECT status,error_message FROM model_test_registry"
+        ).fetchone()
+    assert registry["status"] == "FAILED"
+    assert "ValueError" in registry["error_message"]
+    with pytest.raises(RuntimeError, match="already consumed"):
+        run_model_test("fixture-failure", 2025, settings)

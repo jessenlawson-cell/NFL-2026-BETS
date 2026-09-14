@@ -11,7 +11,7 @@ from nfl_bets.odds.client import snapshot_odds
 def test_provider_failure_never_persists_api_key(tmp_path, monkeypatch) -> None:
     secret = "fixture-secret-key"
     monkeypatch.setenv("THE_ODDS_API_KEY", secret)
-    settings = Settings(root=tmp_path)
+    settings = Settings.for_root(tmp_path)
     initialize_database(settings)
 
     def handler(request: httpx.Request) -> httpx.Response:

@@ -26,10 +26,11 @@ class Settings(BaseSettings):
     data_dir: Path = Field(default_factory=lambda: _repository_root() / "data")
     cache_dir: Path = Field(default_factory=lambda: _repository_root() / "data/cache/nflreadpy")
     raw_dir: Path = Field(default_factory=lambda: _repository_root() / "data/raw")
-    curated_dir: Path = Field(default_factory=lambda: _repository_root() / "data/curated")
+    staging_dir: Path = Field(default_factory=lambda: _repository_root() / "data/staging")
     runtime_dir: Path = Field(default_factory=lambda: _repository_root() / "data/runtime")
     artifacts_dir: Path = Field(default_factory=lambda: _repository_root() / "artifacts")
     reports_dir: Path = Field(default_factory=lambda: _repository_root() / "reports")
+    manifests_dir: Path = Field(default_factory=lambda: _repository_root() / "manifests")
     db_path: Path = Field(
         default_factory=lambda: _repository_root() / "data/runtime/nfl_bets.sqlite3"
     )
@@ -53,24 +54,27 @@ class Settings(BaseSettings):
             self.cache_dir = self.data_dir / "cache" / "nflreadpy"
         if "raw_dir" not in self.model_fields_set:
             self.raw_dir = self.data_dir / "raw"
-        if "curated_dir" not in self.model_fields_set:
-            self.curated_dir = self.data_dir / "curated"
+        if "staging_dir" not in self.model_fields_set:
+            self.staging_dir = self.data_dir / "staging"
         if "runtime_dir" not in self.model_fields_set:
             self.runtime_dir = self.data_dir / "runtime"
         if "artifacts_dir" not in self.model_fields_set:
             self.artifacts_dir = root / "artifacts"
         if "reports_dir" not in self.model_fields_set:
             self.reports_dir = root / "reports"
+        if "manifests_dir" not in self.model_fields_set:
+            self.manifests_dir = root / "manifests"
         if "db_path" not in self.model_fields_set:
             self.db_path = self.runtime_dir / "nfl_bets.sqlite3"
         for field_name in (
             "data_dir",
             "cache_dir",
             "raw_dir",
-            "curated_dir",
+            "staging_dir",
             "runtime_dir",
             "artifacts_dir",
             "reports_dir",
+            "manifests_dir",
             "db_path",
         ):
             setattr(self, field_name, getattr(self, field_name).resolve())
@@ -79,15 +83,35 @@ class Settings(BaseSettings):
     def tz(self) -> ZoneInfo:
         return ZoneInfo(self.timezone)
 
+    @classmethod
+    def for_root(cls, root: Path) -> Settings:
+        """Create fully isolated settings without inheriting host or Docker path variables."""
+        resolved = root.resolve()
+        data = resolved / "data"
+        return cls(  # type: ignore[call-arg]
+            _env_file=None,
+            root=resolved,
+            data_dir=data,
+            cache_dir=data / "cache" / "nflreadpy",
+            raw_dir=data / "raw",
+            staging_dir=data / "staging",
+            runtime_dir=data / "runtime",
+            artifacts_dir=resolved / "artifacts",
+            reports_dir=resolved / "reports",
+            manifests_dir=resolved / "manifests",
+            db_path=data / "runtime" / "nfl_bets.sqlite3",
+        )
+
     def ensure_directories(self) -> None:
         for path in (
             self.cache_dir,
             self.raw_dir / "nflverse",
             self.raw_dir / "odds",
-            self.curated_dir,
+            self.staging_dir,
             self.runtime_dir,
             self.artifacts_dir / "models",
             self.reports_dir,
+            self.manifests_dir,
             self.root / "logs",
         ):
             path.mkdir(parents=True, exist_ok=True)

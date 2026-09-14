@@ -1,0 +1,409 @@
+{
+  "bootstrap": {
+    "intervals": {
+      "spread_final_minus_market_rmse": {
+        "lower_95": -0.00040205516937810156,
+        "median": 0.0009026218329131197,
+        "upper_95": 0.003148283632619097
+      },
+      "total_final_minus_market_rmse": {
+        "lower_95": 0.0,
+        "median": 0.0,
+        "upper_95": 0.0
+      }
+    },
+    "samples": 1000,
+    "seed": 20260913
+  },
+  "coefficients": [
+    {
+      "feature": "home_off_pass_epa",
+      "spread_standardized": 1.9335771512943805,
+      "total_standardized": 1.389285230936608
+    },
+    {
+      "feature": "home_def_pass_epa",
+      "spread_standardized": -1.5501017395188874,
+      "total_standardized": 0.19918284144981468
+    },
+    {
+      "feature": "home_off_rush_epa",
+      "spread_standardized": 0.3428819075811861,
+      "total_standardized": 0.2823897617249539
+    },
+    {
+      "feature": "home_def_rush_epa",
+      "spread_standardized": -0.4909450963095644,
+      "total_standardized": -0.17676660243350442
+    },
+    {
+      "feature": "home_off_pass_success_rate",
+      "spread_standardized": 0.6087279749944052,
+      "total_standardized": 0.4401649916747783
+    },
+    {
+      "feature": "home_def_pass_success_rate",
+      "spread_standardized": -0.04892582593070201,
+      "total_standardized": 0.2647952177440326
+    },
+    {
+      "feature": "home_off_rush_success_rate",
+      "spread_standardized": 0.8322191366873891,
+      "total_standardized": -0.30453491679817163
+    },
+    {
+      "feature": "home_def_rush_success_rate",
+      "spread_standardized": -0.15135160661078337,
+      "total_standardized": 0.5644604194736798
+    },
+    {
+      "feature": "away_off_pass_epa",
+      "spread_standardized": -1.045702154534048,
+      "total_standardized": 0.7942778725696217
+    },
+    {
+      "feature": "away_def_pass_epa",
+      "spread_standardized": 0.911856096944405,
+      "total_standardized": 0.3242676640057808
+    },
+    {
+      "feature": "away_off_rush_epa",
+      "spread_standardized": -0.8019070339132204,
+      "total_standardized": -0.03326329852599395
+    },
+    {
+      "feature": "away_def_rush_epa",
+      "spread_standardized": 0.6708469508829433,
+      "total_standardized": 0.2253313131194329
+    },
+    {
+      "feature": "away_off_pass_success_rate",
+      "spread_standardized": -1.3824455892715541,
+      "total_standardized": 0.8011554588056381
+    },
+    {
+      "feature": "away_def_pass_success_rate",
+      "spread_standardized": -0.2045371150749649,
+      "total_standardized": 0.422983234115359
+    },
+    {
+      "feature": "away_off_rush_success_rate",
+      "spread_standardized": -0.5480389701622977,
+      "total_standardized": 0.4494493283889447
+    },
+    {
+      "feature": "away_def_rush_success_rate",
+      "spread_standardized": -0.011567993278008028,
+      "total_standardized": -0.1815985160736661
+    },
+    {
+      "feature": "rest_difference",
+      "spread_standardized": 0.263893369197573,
+      "total_standardized": 0.12999221392552687
+    }
+  ],
+  "development_end_season": 2024,
+  "development_metrics": {
+    "spread": {
+      "calibration": {
+        "intercept": 0.0001817136671806084,
+        "slope": 1.003905079356029
+      },
+      "market": {
+        "mae": 10.02315634218289,
+        "rmse": 13.002390862514206
+      },
+      "market_probability": {
+        "brier": 0.2502698494022679,
+        "log_loss": 0.6936887346902597
+      },
+      "market_regressed": {
+        "mae": 10.025104536190964,
+        "rmse": 13.003412277780626
+      },
+      "probability": {
+        "brier": 0.24984739484514765,
+        "log_loss": 0.6928419770953689
+      },
+      "raw": {
+        "mae": 10.708928436728197,
+        "rmse": 13.770911779413952
+      }
+    },
+    "total": {
+      "calibration": {
+        "intercept": -0.04696015398693388,
+        "slope": 0.0026746954391399604
+      },
+      "market": {
+        "mae": 10.506047197640118,
+        "rmse": 13.248946638153878
+      },
+      "market_probability": {
+        "brier": 0.25001800302849414,
+        "log_loss": 0.6931833745159459
+      },
+      "market_regressed": {
+        "mae": 10.506047197640118,
+        "rmse": 13.248946638153878
+      },
+      "probability": {
+        "brier": 0.24984703364929303,
+        "log_loss": 0.6928411772756417
+      },
+      "raw": {
+        "mae": 10.888340214755674,
+        "rmse": 13.742712901956322
+      }
+    }
+  },
+  "feature_hash": "f1f3b0575525076dcd3393a521aecca7cddb241650052ea256836c2f5711e49f",
+  "folds": [
+    {
+      "half_life": 4.0,
+      "prior_strength": 0.5,
+      "rows": 256,
+      "season": 2012,
+      "spread_final_rmse": 14.020875897657037,
+      "spread_market_alpha": 0.0,
+      "spread_market_rmse": 14.020875897657037,
+      "spread_raw_rmse": 14.782962732662128,
+      "spread_ridge_alpha": 100.0,
+      "total_final_rmse": 13.233148186939493,
+      "total_market_alpha": 0.0,
+      "total_market_rmse": 13.233148186939493,
+      "total_raw_rmse": 13.947718688611157,
+      "total_ridge_alpha": 100.0
+    },
+    {
+      "half_life": 4.0,
+      "prior_strength": 0.25,
+      "rows": 256,
+      "season": 2013,
+      "spread_final_rmse": 12.679993160980016,
+      "spread_market_alpha": 0.0,
+      "spread_market_rmse": 12.679993160980016,
+      "spread_raw_rmse": 13.41592641076602,
+      "spread_ridge_alpha": 100.0,
+      "total_final_rmse": 14.012863788765664,
+      "total_market_alpha": 0.0,
+      "total_market_rmse": 14.012863788765664,
+      "total_raw_rmse": 14.52374249649219,
+      "total_ridge_alpha": 100.0
+    },
+    {
+      "half_life": 4.0,
+      "prior_strength": 0.25,
+      "rows": 256,
+      "season": 2014,
+      "spread_final_rmse": 14.481062525761015,
+      "spread_market_alpha": 0.0,
+      "spread_market_rmse": 14.481062525761015,
+      "spread_raw_rmse": 15.107116634496636,
+      "spread_ridge_alpha": 100.0,
+      "total_final_rmse": 13.060182210635501,
+      "total_market_alpha": 0.0,
+      "total_market_rmse": 13.060182210635501,
+      "total_raw_rmse": 13.415013113563399,
+      "total_ridge_alpha": 100.0
+    },
+    {
+      "half_life": 4.0,
+      "prior_strength": 0.5,
+      "rows": 256,
+      "season": 2015,
+      "spread_final_rmse": 12.875644704732265,
+      "spread_market_alpha": 0.0,
+      "spread_market_rmse": 12.875644704732265,
+      "spread_raw_rmse": 13.570072851291448,
+      "spread_ridge_alpha": 100.0,
+      "total_final_rmse": 13.331156235019527,
+      "total_market_alpha": 0.0,
+      "total_market_rmse": 13.331156235019527,
+      "total_raw_rmse": 13.56684239960198,
+      "total_ridge_alpha": 100.0
+    },
+    {
+      "half_life": 4.0,
+      "prior_strength": 0.5,
+      "rows": 256,
+      "season": 2016,
+      "spread_final_rmse": 11.785801872734812,
+      "spread_market_alpha": 0.012406431994073115,
+      "spread_market_rmse": 11.787423780241381,
+      "spread_raw_rmse": 12.530352466393621,
+      "spread_ridge_alpha": 100.0,
+      "total_final_rmse": 12.428231471130557,
+      "total_market_alpha": 0.0,
+      "total_market_rmse": 12.428231471130557,
+      "total_raw_rmse": 13.251876747467456,
+      "total_ridge_alpha": 100.0
+    },
+    {
+      "half_life": 4.0,
+      "prior_strength": 0.5,
+      "rows": 255,
+      "season": 2017,
+      "spread_final_rmse": 13.129588456624838,
+      "spread_market_alpha": 0.02353389767183708,
+      "spread_market_rmse": 13.122985372926362,
+      "spread_raw_rmse": 14.019485153711804,
+      "spread_ridge_alpha": 100.0,
+      "total_final_rmse": 14.179694125410325,
+      "total_market_alpha": 0.0,
+      "total_market_rmse": 14.179694125410325,
+      "total_raw_rmse": 14.346190585690026,
+      "total_ridge_alpha": 100.0
+    },
+    {
+      "half_life": 4.0,
+      "prior_strength": 0.25,
+      "rows": 256,
+      "season": 2018,
+      "spread_final_rmse": 13.143534867770487,
+      "spread_market_alpha": 0.0036498668092551445,
+      "spread_market_rmse": 13.143848073813848,
+      "spread_raw_rmse": 13.764576428852777,
+      "spread_ridge_alpha": 100.0,
+      "total_final_rmse": 13.464725326756577,
+      "total_market_alpha": 0.0,
+      "total_market_rmse": 13.464725326756577,
+      "total_raw_rmse": 14.493165675400503,
+      "total_ridge_alpha": 100.0
+    },
+    {
+      "half_life": 4.0,
+      "prior_strength": 0.5,
+      "rows": 256,
+      "season": 2019,
+      "spread_final_rmse": 13.127867903893616,
+      "spread_market_alpha": 0.0023410548526220675,
+      "spread_market_rmse": 13.127455127518052,
+      "spread_raw_rmse": 14.198477370032032,
+      "spread_ridge_alpha": 100.0,
+      "total_final_rmse": 13.428630793941727,
+      "total_market_alpha": 0.0,
+      "total_market_rmse": 13.428630793941727,
+      "total_raw_rmse": 13.749664332941052,
+      "total_ridge_alpha": 100.0
+    },
+    {
+      "half_life": 4.0,
+      "prior_strength": 0.5,
+      "rows": 256,
+      "season": 2020,
+      "spread_final_rmse": 12.770778106188361,
+      "spread_market_alpha": 0.0,
+      "spread_market_rmse": 12.770778106188361,
+      "spread_raw_rmse": 13.649829144027228,
+      "spread_ridge_alpha": 100.0,
+      "total_final_rmse": 12.849603289109746,
+      "total_market_alpha": 0.0,
+      "total_market_rmse": 12.849603289109746,
+      "total_raw_rmse": 13.64339179716895,
+      "total_ridge_alpha": 100.0
+    },
+    {
+      "half_life": 4.0,
+      "prior_strength": 0.5,
+      "rows": 272,
+      "season": 2021,
+      "spread_final_rmse": 13.669180932043485,
+      "spread_market_alpha": 0.0,
+      "spread_market_rmse": 13.669180932043485,
+      "spread_raw_rmse": 14.534669357524832,
+      "spread_ridge_alpha": 100.0,
+      "total_final_rmse": 13.281559252454908,
+      "total_market_alpha": 0.0,
+      "total_market_rmse": 13.281559252454908,
+      "total_raw_rmse": 13.544354558183302,
+      "total_ridge_alpha": 100.0
+    },
+    {
+      "half_life": 4.0,
+      "prior_strength": 0.5,
+      "rows": 271,
+      "season": 2022,
+      "spread_final_rmse": 11.432861938435233,
+      "spread_market_alpha": 0.0,
+      "spread_market_rmse": 11.432861938435233,
+      "spread_raw_rmse": 11.698015609008523,
+      "spread_ridge_alpha": 100.0,
+      "total_final_rmse": 13.227919707142078,
+      "total_market_alpha": 0.0,
+      "total_market_rmse": 13.227919707142078,
+      "total_raw_rmse": 13.642069176569443,
+      "total_ridge_alpha": 100.0
+    },
+    {
+      "half_life": 4.0,
+      "prior_strength": 0.5,
+      "rows": 272,
+      "season": 2023,
+      "spread_final_rmse": 13.078448964743957,
+      "spread_market_alpha": 0.016500444070035997,
+      "spread_market_rmse": 13.07072109716981,
+      "spread_raw_rmse": 14.221585789125637,
+      "spread_ridge_alpha": 100.0,
+      "total_final_rmse": 13.130146049991891,
+      "total_market_alpha": 0.0,
+      "total_market_rmse": 13.130146049991891,
+      "total_raw_rmse": 13.562356066183465,
+      "total_ridge_alpha": 100.0
+    },
+    {
+      "half_life": 4.0,
+      "prior_strength": 0.5,
+      "rows": 272,
+      "season": 2024,
+      "spread_final_rmse": 12.6051460079744,
+      "spread_market_alpha": 0.0,
+      "spread_market_rmse": 12.6051460079744,
+      "spread_raw_rmse": 13.229017635540123,
+      "spread_ridge_alpha": 100.0,
+      "total_final_rmse": 12.551548123403649,
+      "total_market_alpha": 0.0,
+      "total_market_rmse": 12.551548123403649,
+      "total_raw_rmse": 12.9513189773536,
+      "total_ridge_alpha": 100.0
+    }
+  ],
+  "model_version": "1.0.1",
+  "reliability": {
+    "spread": [
+      {
+        "bin": 5,
+        "count": 3054,
+        "mean_probability": 0.48785596731097675,
+        "observed_rate": 0.4862475442043222
+      },
+      {
+        "bin": 6,
+        "count": 247,
+        "mean_probability": 0.5023896101460176,
+        "observed_rate": 0.5222672064777328
+      }
+    ],
+    "total": [
+      {
+        "bin": 5,
+        "count": 3357,
+        "mean_probability": 0.4882326730414021,
+        "observed_rate": 0.4882335418528448
+      }
+    ]
+  },
+  "selected_configuration": {
+    "half_life": 4.0,
+    "prior_strength": 0.5,
+    "spread_market_alpha": 0.0,
+    "spread_ridge_alpha": 100.0,
+    "total_market_alpha": 0.0,
+    "total_ridge_alpha": 100.0
+  },
+  "spec_hash": "dba87c9fbdb6f93346cf39e6012fc0d82410d92f4d887a648bc0dcdb191ba394",
+  "status": "LOCKED_UNTESTED",
+  "training_rows": 3902,
+  "untouched_test_consumed": false,
+  "untouched_test_season": 2025
+}

@@ -1,0 +1,99 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<title>NFL model 1.0.1 untouched 2025 test</title>
+<style>
+body{font-family:Arial,sans-serif;max-width:1100px;margin:32px auto;color:#222}
+h1,h2{color:#17365d}
+table{border-collapse:collapse;width:100%}
+th{background:#17365d;color:white}
+th,td{padding:8px;border:1px solid #ccd6e0;text-align:left}
+pre{background:#f4f7fa;padding:16px;overflow:auto}
+</style></head><body>
+<h1>NFL Model 1.0.1 — Untouched 2025 Test</h1>
+<p>Final status: <strong>PASS_ONLY</strong>. This test is permanently consumed.</p>
+<p>No test result may be used to retune V1.</p>
+<h2>Promotion gates</h2>
+<table><thead><tr><th>Gate</th><th>Result</th></tr></thead><tbody><tr><td>spread_brier_beats_market</td><td>FAIL</td></tr><tr><td>spread_log_loss_beats_market</td><td>FAIL</td></tr><tr><td>spread_calibration_acceptable</td><td>FAIL</td></tr><tr><td>total_brier_beats_market</td><td>PASS</td></tr><tr><td>total_log_loss_beats_market</td><td>PASS</td></tr><tr><td>total_calibration_acceptable</td><td>FAIL</td></tr></tbody></table>
+<h2>Scoring and calibration</h2><pre>{
+  &quot;spread&quot;: {
+    &quot;non_push_rows&quot;: 271,
+    &quot;push_rows&quot;: 1,
+    &quot;candidate&quot;: {
+      &quot;brier&quot;: 0.24959501188064992,
+      &quot;log_loss&quot;: 0.6923374864635036
+    },
+    &quot;calibration&quot;: {
+      &quot;intercept&quot;: 0.09574213448020423,
+      &quot;slope&quot;: 2.735848052013035
+    },
+    &quot;reliability&quot;: [
+      {
+        &quot;bin&quot;: 5,
+        &quot;count&quot;: 205,
+        &quot;mean_probability&quot;: 0.48559894699574213,
+        &quot;observed_rate&quot;: 0.48292682926829267
+      },
+      {
+        &quot;bin&quot;: 6,
+        &quot;count&quot;: 66,
+        &quot;mean_probability&quot;: 0.5060788604821145,
+        &quot;observed_rate&quot;: 0.5454545454545454
+      }
+    ],
+    &quot;raw&quot;: {
+      &quot;rmse&quot;: 13.10835015491221,
+      &quot;mae&quot;: 10.118193247280074
+    },
+    &quot;market&quot;: {
+      &quot;brier&quot;: 0.2495867131268083,
+      &quot;log_loss&quot;: 0.6923205180550218,
+      &quot;rmse&quot;: 12.271177672521421,
+      &quot;mae&quot;: 9.722426470588236
+    },
+    &quot;market_regressed&quot;: {
+      &quot;rmse&quot;: 12.271177672521421,
+      &quot;mae&quot;: 9.722426470588236
+    }
+  },
+  &quot;total&quot;: {
+    &quot;non_push_rows&quot;: 272,
+    &quot;push_rows&quot;: 0,
+    &quot;candidate&quot;: {
+      &quot;brier&quot;: 0.25028313560992355,
+      &quot;log_loss&quot;: 0.6937141090427633
+    },
+    &quot;calibration&quot;: {
+      &quot;intercept&quot;: 0.17098627825283408,
+      &quot;slope&quot;: 1.7418335617934926
+    },
+    &quot;reliability&quot;: [
+      {
+        &quot;bin&quot;: 5,
+        &quot;count&quot;: 191,
+        &quot;mean_probability&quot;: 0.48274204765893153,
+        &quot;observed_rate&quot;: 0.5130890052356021
+      },
+      {
+        &quot;bin&quot;: 6,
+        &quot;count&quot;: 81,
+        &quot;mean_probability&quot;: 0.5009338335020888,
+        &quot;observed_rate&quot;: 0.5432098765432098
+      }
+    ],
+    &quot;raw&quot;: {
+      &quot;rmse&quot;: 13.633077824833865,
+      &quot;mae&quot;: 10.777766996071561
+    },
+    &quot;market&quot;: {
+      &quot;brier&quot;: 0.2504056398371012,
+      &quot;log_loss&quot;: 0.6939590876085664,
+      &quot;rmse&quot;: 13.18644580397525,
+      &quot;mae&quot;: 10.393382352941176
+    },
+    &quot;market_regressed&quot;: {
+      &quot;rmse&quot;: 13.18644580397525,
+      &quot;mae&quot;: 10.393382352941176
+    }
+  }
+}</pre>
+</body></html>

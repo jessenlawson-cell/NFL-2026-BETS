@@ -12,7 +12,7 @@ from nfl_bets.odds.consensus import ZeroJuiceFlatlineError
 
 
 def test_raw_response_is_saved_before_flatline_parse_failure(tmp_path, monkeypatch) -> None:
-    settings = Settings(root=tmp_path)
+    settings = Settings.for_root(tmp_path)
     initialize_database(settings)
     monkeypatch.setenv("THE_ODDS_API_KEY", "fixture-key-never-logged")
     board = [

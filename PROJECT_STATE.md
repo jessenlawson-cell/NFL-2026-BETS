@@ -1,7 +1,7 @@
 # 2026 PROJECT STATE
 - **Current Season:** 2026
 - **Current Week:** 1
-- **Last Model Version:** None frozen
-- **System Status:** Steps 1-5 implemented; authoritative sync, feature build, and real 2025 test not yet executed
-- **Betting Status:** PASS-only until a frozen version passes the untouched 2025 promotion gate
+- **Last Model Version:** 1.1.2 (LOCKED_UNTESTED_2026)
+- **System Status:** V1 remains PASS-only; V1.1 feature expansion developed through 2025 and frozen for prospective 2026 evaluation after 2026-09-14T01:53:59.778571Z
+- **Betting Status:** PASS-only; V1.1 has no prospective promotion evidence
 - **Schema Version:** 1.0.0

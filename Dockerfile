@@ -9,10 +9,11 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     NFL_BETS_DATA_DIR=/workspace/data \
     NFL_BETS_CACHE_DIR=/workspace/data/cache/nflreadpy \
     NFL_BETS_RAW_DIR=/workspace/data/raw \
-    NFL_BETS_CURATED_DIR=/workspace/data/curated \
+    NFL_BETS_STAGING_DIR=/workspace/data/staging \
     NFL_BETS_RUNTIME_DIR=/workspace/data/runtime \
     NFL_BETS_ARTIFACTS_DIR=/workspace/artifacts \
     NFL_BETS_REPORTS_DIR=/workspace/reports \
+    NFL_BETS_MANIFESTS_DIR=/workspace/manifests \
     NFL_BETS_DB_PATH=/workspace/data/runtime/nfl_bets.sqlite3
 
 WORKDIR /workspace
@@ -33,9 +34,10 @@ RUN mkdir -p \
     /workspace/data/cache/nflreadpy \
     /workspace/data/raw/nflverse \
     /workspace/data/raw/odds \
-    /workspace/data/curated \
+    /workspace/data/staging \
     /workspace/data/runtime \
     /workspace/artifacts/models \
+    /workspace/manifests \
     /workspace/reports \
     /workspace/logs
 

@@ -12,7 +12,9 @@ __pycache__
 data/cache
 data/raw
 data/runtime
+data/staging
 artifacts/models
 reports
 logs
-
+outputs
+.codex_tmp

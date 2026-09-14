@@ -1,0 +1,29 @@
+{
+  "artifact": "data/runtime/features/team_game_lags.parquet",
+  "as_of_utc": "2026-09-13T19:20:14.760705Z",
+  "content_hash": "ff1f7c1ec1e360087ac3c74658a19a47ea849df35806d124ffdd2e47c40d9e60",
+  "half_life_grid": [
+    1.0,
+    2.0,
+    4.0
+  ],
+  "lags": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "prior_strength_grid": [
+    0.25,
+    0.5,
+    0.75,
+    1.0
+  ],
+  "retrieved_at_utc": "2026-09-13T19:21:45.271837Z",
+  "rolling_games": 4,
+  "rows": 8906,
+  "schema_version": "1.0.0",
+  "source": "nflverse:pbp-derived",
+  "status": "BUILT_UNWEIGHTED",
+  "sync_run_id": "4e628e8e-14b3-43cd-a731-9b62c85b04a5"
+}

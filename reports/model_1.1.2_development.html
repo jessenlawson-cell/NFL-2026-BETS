@@ -1,0 +1,92 @@
+<!doctype html><html><head><meta charset="utf-8">
+<title>NFL model 1.1.2 development</title>
+<style>body{font-family:Arial,sans-serif;max-width:1100px;margin:32px auto;color:#222}
+h1,h2{color:#17365d}pre{background:#f4f7fa;padding:16px;overflow:auto}</style></head>
+<body><h1>NFL Model 1.1.2 — V1.1 Development</h1>
+<p>Status: <strong>LOCKED_UNTESTED_2026</strong>. Only games after the recorded prospective cutoff
+may enter the new untouched evaluation.</p><h2>Selected configuration</h2><pre>{
+  &quot;half_life&quot;: 1.0,
+  &quot;prior_strength&quot;: 0.25,
+  &quot;spread_ridge_alpha&quot;: 0.1,
+  &quot;total_ridge_alpha&quot;: 100.0,
+  &quot;spread_adjustment_weight&quot;: 0.0,
+  &quot;total_adjustment_weight&quot;: 0.1161508759454473
+}</pre>
+<h2>Development metrics</h2><pre>{
+  &quot;spread&quot;: {
+    &quot;nested_market&quot;: {
+      &quot;rmse&quot;: 12.810374252810153,
+      &quot;mae&quot;: 9.869227539882452
+    },
+    &quot;nested_market_plus_adjustment&quot;: {
+      &quot;rmse&quot;: 12.81202428165071,
+      &quot;mae&quot;: 9.870190797875376
+    },
+    &quot;selected_oof_probability&quot;: {
+      &quot;brier&quot;: 0.24967408961054352,
+      &quot;log_loss&quot;: 0.6924953227060945
+    },
+    &quot;selected_oof_market_probability&quot;: {
+      &quot;brier&quot;: 0.24990462463337665,
+      &quot;log_loss&quot;: 0.6929571102338897
+    },
+    &quot;selected_oof_calibration&quot;: {
+      &quot;intercept&quot;: 0.00012768912262453382,
+      &quot;slope&quot;: 1.0024544015363346
+    },
+    &quot;selected_oof_reliability&quot;: [
+      {
+        &quot;bin&quot;: 5,
+        &quot;count&quot;: 2222,
+        &quot;mean_probability&quot;: 0.4820738378419352,
+        &quot;observed_rate&quot;: 0.4810981098109811
+      },
+      {
+        &quot;bin&quot;: 6,
+        &quot;count&quot;: 599,
+        &quot;mean_probability&quot;: 0.508922431710124,
+        &quot;observed_rate&quot;: 0.5125208681135225
+      }
+    ],
+    &quot;selected_oof_rows&quot;: 2894,
+    &quot;selected_oof_non_push_rows&quot;: 2821
+  },
+  &quot;total&quot;: {
+    &quot;nested_market&quot;: {
+      &quot;rmse&quot;: 13.255806832384739,
+      &quot;mae&quot;: 10.472292191435768
+    },
+    &quot;nested_market_plus_adjustment&quot;: {
+      &quot;rmse&quot;: 13.26382860695487,
+      &quot;mae&quot;: 10.470361426889763
+    },
+    &quot;selected_oof_probability&quot;: {
+      &quot;brier&quot;: 0.2497182303470267,
+      &quot;log_loss&quot;: 0.6925845296804995
+    },
+    &quot;selected_oof_market_probability&quot;: {
+      &quot;brier&quot;: 0.2500034163673601,
+      &quot;log_loss&quot;: 0.693154214193825
+    },
+    &quot;selected_oof_calibration&quot;: {
+      &quot;intercept&quot;: -8.737075280651648e-05,
+      &quot;slope&quot;: 0.9981127152984747
+    },
+    &quot;selected_oof_reliability&quot;: [
+      {
+        &quot;bin&quot;: 5,
+        &quot;count&quot;: 2586,
+        &quot;mean_probability&quot;: 0.4861719587921496,
+        &quot;observed_rate&quot;: 0.48530549110595517
+      },
+      {
+        &quot;bin&quot;: 6,
+        &quot;count&quot;: 282,
+        &quot;mean_probability&quot;: 0.5097735022685269,
+        &quot;observed_rate&quot;: 0.5177304964539007
+      }
+    ],
+    &quot;selected_oof_rows&quot;: 2894,
+    &quot;selected_oof_non_push_rows&quot;: 2868
+  }
+}</pre></body></html>
