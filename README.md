@@ -17,9 +17,12 @@ The GitHub remote is `jessenlawson-cell/NFL-2026-BETS`. Project-specific Codex i
 - `DATA_DICTIONARY.md`: documented dataset fields and keys.
 - `MODEL_SPEC.md`: frozen V1 targets, temporal boundaries, calibration, and promotion gate.
 - `MODEL_SPEC_V1_1.md`: frozen V1.1 secondary-adjustment and prospective-evaluation contract.
+- `manifests/prospective_policy_1.1.2.json`: immutable live-evaluation contract tied to the
+  candidate hash and pre-collection Git tag.
 - `src/nfl_bets/`: packaged CLI, ingestion, database, odds, features, and model code.
 - `games.csv`, `team_metrics.csv`, `injuries.csv`, `market_odds.csv`,
-  `player_usage.csv`, `coverage_metrics.csv`, `model_history.csv`, and `bet_log.csv`:
+  `player_usage.csv`, `coverage_metrics.csv`, `model_history.csv`, `bet_log.csv`,
+  `model_predictions.csv`, and `prospective_evaluations.csv`:
   schema-controlled authoritative exports.
 - `tests/fixtures/randomized_team_metrics.csv`: quarantined synthetic data; tests only.
 - `data/raw/`, `data/cache/`, `data/staging/`, and `data/runtime/`: ignored provider
@@ -57,6 +60,11 @@ nfl-bets model test --version 1.0.1 --season 2025
 nfl-bets v11 features build --as-of 2026-09-13T19:20:14.760705Z
 nfl-bets v11 model train --version 1.1.2
 nfl-bets odds snapshot --slot manual
+nfl-bets v11 predict --snapshot-id <snapshot-id>
+nfl-bets settle --through 2026-09-21T12:00:00-04:00
+nfl-bets v11 checkpoint --through-week 8
+nfl-bets v11 test --through-week 8
+nfl-bets report
 ```
 
 The live odds command requires `THE_ODDS_API_KEY`. It makes one consolidated board request,
@@ -80,6 +88,31 @@ The result is documented in `STAGE_7_2025_TEST.md` and the immutable test report
 V1.1 candidate `1.1.2` is frozen as `LOCKED_UNTESTED_2026`. Its evaluation population begins only
 after its recorded prospective cutoff, so earlier 2026 games are ineligible. Injury clusters are
 available as diagnostics but model-disabled because the synchronized archive begins in 2025.
+
+## Stage 9 observer operation
+
+The model now has an immutable prospective ledger. A prediction uses the exact `1.1.2` artifact,
+current leakage-safe V1.1 features, and the Pinnacle point available in a saved odds snapshot.
+Every row remains `PASS` because prospective uncertainty and staking have not been validated.
+
+Use `nfl-bets pilot capture --slot <slot-name>` for each of the 16 configured slots during one
+complete manual week. This performs exactly one consolidated odds request and immediately writes
+the corresponding PASS-only predictions. It does not retry an ambiguous request. Check progress
+with:
+
+```powershell
+docker compose run --rm nfl-bets pilot status --week-bucket 2026-09-15
+```
+
+Only after that report says `PASSED` may the Windows tasks be installed:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\install_scheduled_tasks.ps1 `
+  -PilotWeekBucket 2026-09-15
+```
+
+The installer verifies all 16 manual slots and the Windows Toronto-compatible time zone. Missed
+tasks are not replayed. See `STAGE_9_PROSPECTIVE_LEDGER.md` for the operational contract.
 
 ## Working rule
 

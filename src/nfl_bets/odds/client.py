@@ -33,6 +33,17 @@ SCHEDULED_SLOTS = {
     "monday_1200",
     "monday_1945",
 }
+REQUEST_CREDIT_COST = 2
+SAFE_RESPONSE_HEADERS = {
+    "content-length",
+    "content-type",
+    "date",
+    "request-id",
+    "x-request-id",
+    "x-requests-last",
+    "x-requests-remaining",
+    "x-requests-used",
+}
 
 
 class QuotaError(RuntimeError):
@@ -61,6 +72,20 @@ def _reserve_request(slot: str, settings: Settings, now: datetime) -> tuple[str,
             "SELECT COUNT(*) FROM api_requests WHERE week_bucket=? AND slot!='manual'",
             (week,),
         ).fetchone()[0]
+        latest_provider_remaining = connection.execute(
+            "SELECT provider_requests_remaining FROM api_requests "
+            "WHERE provider_requests_remaining IS NOT NULL "
+            "AND substr(started_at_utc,1,7)=? "
+            "ORDER BY completed_at_utc DESC LIMIT 1",
+            (iso_utc(now)[:7],),
+        ).fetchone()
+        if (
+            latest_provider_remaining is not None
+            and int(latest_provider_remaining[0]) < REQUEST_CREDIT_COST
+        ):
+            raise QuotaError(
+                "Provider reports fewer than two credits; consolidated capture was not attempted"
+            )
         if total >= settings.weekly_call_limit:
             raise QuotaError(f"Weekly request ceiling reached for bucket {week}")
         if (
@@ -84,6 +109,13 @@ def _safe_int_header(headers: httpx.Headers, name: str) -> int | None:
         return int(value) if value is not None else None
     except ValueError:
         return None
+
+
+def _sanitized_response_headers(headers: httpx.Headers) -> dict[str, str]:
+    """Persist only operational headers; cookies, authorization, and key echoes are dropped."""
+    return {
+        key.lower(): value for key, value in headers.items() if key.lower() in SAFE_RESPONSE_HEADERS
+    }
 
 
 def _match_games(payload: list[dict[str, Any]], settings: Settings) -> dict[str, str | None]:
@@ -146,7 +178,6 @@ def _persist_parsed(parsed: ParsedBoard, settings: Settings) -> None:
         else pl.DataFrame({c: [] for c in quote_columns})
     )
     atomic_write_text(settings.root / "market_odds.csv", frame.write_csv())
-    atomic_write_text(settings.root / "market_odds.csv", frame.write_csv())
 
 
 def snapshot_odds(
@@ -195,7 +226,7 @@ def snapshot_odds(
     raw_path = resolved.raw_dir / "odds" / date_path / f"{file_stem}.json"
     headers_path = resolved.raw_dir / "odds" / date_path / f"{file_stem}.headers.json"
     atomic_write_bytes(raw_path, response.content)
-    safe_headers = dict(response.headers)
+    safe_headers = _sanitized_response_headers(response.headers)
     atomic_write_text(headers_path, json.dumps(safe_headers, sort_keys=True, indent=2))
     content_hash = sha256_bytes(response.content)
     with transaction(resolved) as connection:
@@ -271,10 +302,12 @@ def snapshot_odds(
             "UPDATE api_requests SET status='COMPLETE' WHERE request_id=?", (request_id,)
         )
     return {
+        "request_id": request_id,
         "snapshot_id": snapshot_id,
         "week_bucket": week,
         "events": len(payload),
         "quotes": len(parsed.quotes),
         "consensus_markets": len(parsed.consensus),
+        "provider_credit_cost": _safe_int_header(response.headers, "x-requests-last"),
         "raw_path": raw_path,
     }

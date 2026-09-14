@@ -62,6 +62,22 @@ Append-only primary key: `bet_id`. Stores the full decision contract, including 
 available contract, price, stake/bankroll, model and market probability, expected ROI, version/data
 timestamps, close/CLV, result, and profit/loss. Prior predictions and losses are immutable.
 
+## `model_predictions.csv`
+
+Append-only primary key: `prediction_id`, deterministically derived from model version, snapshot,
+game, and market. Each row binds the frozen artifact/spec/policy hashes and Git commit to one
+pregame Pinnacle contract, feature as-of/hash, ridge adjustment, final projection, calibrated
+win/push/loss probabilities, consensus diagnostics, eligibility reason, and mandatory `PASS`
+decision. A prediction is never created at or after kickoff and is never updated after insertion.
+
+## `prospective_evaluations.csv`
+
+Append-only primary key: `evaluation_id`, deterministically derived from model version, game, and
+market. Settlement first chooses the latest valid Pinnacle prediction captured 90–5 minutes before
+kickoff with a quote no older than 30 minutes, then joins the outcome. Rows preserve exclusions and
+pushes; pushes never enter Brier or log-loss comparisons. The canonical close row includes model
+and market scores, projection errors, and line CLV.
+
 ## V1.1 runtime feature store
 
 `data/runtime/features/v11_team_game_lags.parquet` is an ignored, reproducible research artifact.
@@ -77,5 +93,6 @@ in 2025. The authoritative root CSVs remain unchanged; V1.1 does not overwrite V
 ## Operational SQLite tables
 
 `ingestion_runs`, `raw_snapshots`, `api_requests`, `market_consensus`, `model_test_registry`, and
-`schema_migrations` provide provenance, quota accounting, consensus diagnostics, one-time test
-enforcement, and migration history. They are local infrastructure rather than authoritative CSVs.
+`prospective_test_registry` and `schema_migrations` provide provenance, quota accounting,
+consensus diagnostics, one-time test enforcement, and migration history. They are local
+infrastructure rather than authoritative CSVs.

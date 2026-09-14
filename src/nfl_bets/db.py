@@ -163,9 +163,67 @@ CREATE TABLE IF NOT EXISTS market_consensus (
     PRIMARY KEY(snapshot_id, provider_event_id, market)
 );
 
+CREATE TABLE IF NOT EXISTS model_predictions (
+    prediction_id TEXT PRIMARY KEY, model_version TEXT NOT NULL,
+    model_artifact_hash TEXT NOT NULL, model_spec_hash TEXT NOT NULL,
+    policy_hash TEXT NOT NULL, git_commit TEXT NOT NULL, snapshot_id TEXT NOT NULL,
+    provider_event_id TEXT NOT NULL, game_id TEXT NOT NULL, season INTEGER NOT NULL,
+    week INTEGER NOT NULL, kickoff_utc TEXT NOT NULL, market TEXT NOT NULL,
+    orientation TEXT NOT NULL, prediction_created_at_utc TEXT NOT NULL,
+    snapshot_retrieved_at_utc TEXT NOT NULL, feature_as_of_utc TEXT,
+    feature_input_hash TEXT, feature_row_hash TEXT, pinnacle_updated_at_utc TEXT,
+    pinnacle_line REAL, pinnacle_orientation_price INTEGER, pinnacle_other_price INTEGER,
+    pinnacle_orientation_no_vig_probability REAL, pinnacle_overround REAL,
+    consensus_line REAL, consensus_probability REAL, consensus_status TEXT,
+    retail_books_count INTEGER NOT NULL, raw_adjustment REAL, adjustment_weight REAL,
+    final_projection REAL, raw_non_push_win_probability REAL,
+    calibrated_non_push_win_probability REAL, model_win_probability REAL,
+    model_push_probability REAL, model_loss_probability REAL,
+    uncertainty_status TEXT NOT NULL, eligibility_status TEXT NOT NULL,
+    decision TEXT NOT NULL CHECK(decision = 'PASS'), pass_reason TEXT NOT NULL,
+    source TEXT NOT NULL, retrieved_at_utc TEXT NOT NULL, source_updated_at_utc TEXT,
+    schema_version TEXT NOT NULL, content_hash TEXT NOT NULL,
+    FOREIGN KEY(snapshot_id) REFERENCES raw_snapshots(snapshot_id),
+    FOREIGN KEY(game_id) REFERENCES games(game_id)
+);
+
+CREATE TABLE IF NOT EXISTS prospective_evaluations (
+    evaluation_id TEXT PRIMARY KEY, prediction_id TEXT, model_version TEXT NOT NULL,
+    game_id TEXT NOT NULL, season INTEGER NOT NULL, week INTEGER NOT NULL,
+    kickoff_utc TEXT NOT NULL, market TEXT NOT NULL, orientation TEXT NOT NULL,
+    settled_at_utc TEXT NOT NULL, selection_rule_version TEXT NOT NULL,
+    canonical_snapshot_id TEXT, prediction_created_at_utc TEXT, feature_as_of_utc TEXT,
+    closing_line REAL, closing_orientation_price INTEGER, closing_other_price INTEGER,
+    closing_market_probability REAL, final_projection REAL,
+    model_non_push_win_probability REAL, model_win_probability REAL,
+    model_push_probability REAL, model_loss_probability REAL, actual_value REAL NOT NULL,
+    result TEXT NOT NULL, eligible_non_push INTEGER NOT NULL,
+    exclusion_reason TEXT, model_brier REAL, market_brier REAL, model_log_loss REAL,
+    market_log_loss REAL, projection_error REAL, market_projection_error REAL,
+    line_clv REAL, source TEXT NOT NULL, retrieved_at_utc TEXT NOT NULL,
+    source_updated_at_utc TEXT, schema_version TEXT NOT NULL, content_hash TEXT NOT NULL,
+    FOREIGN KEY(prediction_id) REFERENCES model_predictions(prediction_id),
+    FOREIGN KEY(game_id) REFERENCES games(game_id)
+);
+
+CREATE TABLE IF NOT EXISTS prospective_test_registry (
+    model_version TEXT NOT NULL, test_season INTEGER NOT NULL,
+    minimum_week INTEGER NOT NULL, requested_through_week INTEGER NOT NULL,
+    first_checked_at_utc TEXT NOT NULL, last_checked_at_utc TEXT NOT NULL,
+    started_at_utc TEXT, completed_at_utc TEXT, status TEXT NOT NULL,
+    spread_non_push_rows INTEGER NOT NULL, total_non_push_rows INTEGER NOT NULL,
+    report_path TEXT, report_hash TEXT, error_message TEXT,
+    PRIMARY KEY(model_version, test_season)
+);
+
 CREATE INDEX IF NOT EXISTS idx_games_season_week ON games(season, week);
 CREATE INDEX IF NOT EXISTS idx_market_odds_game ON market_odds(game_id, market);
 CREATE INDEX IF NOT EXISTS idx_api_requests_week ON api_requests(week_bucket, started_at_utc);
+CREATE INDEX IF NOT EXISTS idx_predictions_snapshot ON model_predictions(snapshot_id);
+CREATE INDEX IF NOT EXISTS idx_predictions_game
+ON model_predictions(model_version, game_id, market);
+CREATE INDEX IF NOT EXISTS idx_evaluations_week
+ON prospective_evaluations(model_version, season, week);
 """
 
 
@@ -196,6 +254,10 @@ def initialize_database(settings: Settings | None = None) -> Path:
         connection.execute(
             "INSERT OR IGNORE INTO schema_migrations(version, applied_at_utc) "
             "VALUES ('1.0.0', strftime('%Y-%m-%dT%H:%M:%fZ','now'))"
+        )
+        connection.execute(
+            "INSERT OR IGNORE INTO schema_migrations(version, applied_at_utc) "
+            "VALUES ('1.1.0', strftime('%Y-%m-%dT%H:%M:%fZ','now'))"
         )
     return resolved.db_path
 

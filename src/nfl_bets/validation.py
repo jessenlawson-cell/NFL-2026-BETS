@@ -26,6 +26,12 @@ INTEGER_COLUMNS = {
     "american_price",
     "price",
     "closing_price",
+    "pinnacle_orientation_price",
+    "pinnacle_other_price",
+    "closing_orientation_price",
+    "closing_other_price",
+    "retail_books_count",
+    "eligible_non_push",
 }
 FLOAT_COLUMNS = {
     "away_score",
@@ -80,6 +86,29 @@ FLOAT_COLUMNS = {
     "probability_clv",
     "profit_loss",
     "half_life",
+    "pinnacle_line",
+    "pinnacle_orientation_no_vig_probability",
+    "pinnacle_overround",
+    "consensus_line",
+    "consensus_probability",
+    "raw_adjustment",
+    "adjustment_weight",
+    "final_projection",
+    "raw_non_push_win_probability",
+    "calibrated_non_push_win_probability",
+    "model_win_probability",
+    "model_push_probability",
+    "model_loss_probability",
+    "closing_market_probability",
+    "model_non_push_win_probability",
+    "actual_value",
+    "model_brier",
+    "market_brier",
+    "model_log_loss",
+    "market_log_loss",
+    "projection_error",
+    "market_projection_error",
+    "line_clv",
     *METRICS,
 }
 TIMESTAMP_COLUMNS = {
@@ -92,6 +121,10 @@ TIMESTAMP_COLUMNS = {
     "data_timestamp",
     "retrieved_at_utc",
     "source_updated_at_utc",
+    "prediction_created_at_utc",
+    "snapshot_retrieved_at_utc",
+    "pinnacle_updated_at_utc",
+    "settled_at_utc",
 }
 
 
@@ -234,11 +267,7 @@ def _validate_v11(settings: Settings) -> dict[str, Any]:
         "week",
         "kickoff_dt",
         "team_id",
-        *[
-            f"lag{offset}_{metric}"
-            for offset in range(1, 5)
-            for metric in V11_METRICS
-        ],
+        *[f"lag{offset}_{metric}" for offset in range(1, 5) for metric in V11_METRICS],
     }
     missing = required - set(lags.columns)
     if missing:
@@ -294,6 +323,140 @@ def _validate_v11(settings: Settings) -> dict[str, Any]:
     }
 
 
+def _validate_prospective(
+    settings: Settings,
+    predictions: pl.DataFrame,
+    evaluations: pl.DataFrame,
+) -> dict[str, Any]:
+    policy_path = settings.manifests_dir / "prospective_policy_1.1.2.json"
+    model_manifest_path = settings.manifests_dir / "model_1.1.2_development.json"
+    if not policy_path.exists():
+        if model_manifest_path.exists():
+            raise DataQualityError("Frozen model 1.1.2 is missing its prospective policy")
+        return {"status": "NOT_CONFIGURED", "predictions": 0, "evaluations": 0}
+    policy = json.loads(policy_path.read_text(encoding="utf-8"))
+    if policy.get("schema_version") != settings.schema_version:
+        raise DataQualityError("Prospective policy schema version mismatch")
+    if policy.get("allowed_decisions") != ["PASS"]:
+        raise DataQualityError("Prospective policy permits a non-PASS decision")
+    if not model_manifest_path.exists():
+        raise DataQualityError("Prospective policy has no matching frozen model manifest")
+    model_manifest = json.loads(model_manifest_path.read_text(encoding="utf-8"))
+    artifact_path = settings.root / str(model_manifest["artifact"])
+    metadata_path = artifact_path.parent / "metadata.json"
+    if not artifact_path.exists() or not metadata_path.exists():
+        raise DataQualityError("Prospective candidate files are missing")
+    checks = {
+        "artifact_hash": sha256_bytes(artifact_path.read_bytes()),
+        "metadata_hash": sha256_bytes(metadata_path.read_bytes()),
+        "spec_hash": sha256_bytes((settings.root / "MODEL_SPEC_V1_1.md").read_bytes()),
+        "development_feature_hash": model_manifest.get("development_feature_hash"),
+        "prospective_start_utc": model_manifest.get("prospective_start_utc"),
+    }
+    for key, actual in checks.items():
+        if policy.get(key) != actual:
+            raise DataQualityError(f"Prospective policy mismatch for {key}")
+    cutoff = datetime.fromisoformat(str(policy["prospective_start_utc"]).replace("Z", "+00:00"))
+    if predictions.height:
+        if predictions.filter(pl.col("decision") != "PASS").height:
+            raise DataQualityError("Prospective ledger contains a non-PASS decision")
+        probability_rows = predictions.drop_nulls(
+            [
+                "model_win_probability",
+                "model_push_probability",
+                "model_loss_probability",
+            ]
+        )
+        if probability_rows.filter(
+            (
+                pl.col("model_win_probability")
+                + pl.col("model_push_probability")
+                + pl.col("model_loss_probability")
+                - 1.0
+            ).abs()
+            > 1e-9
+        ).height:
+            raise DataQualityError("Prospective model probabilities do not sum to one")
+        temporal = predictions.with_columns(
+            pl.col("kickoff_utc").str.to_datetime(time_zone="UTC").alias("kickoff_dt"),
+            pl.col("prediction_created_at_utc")
+            .str.to_datetime(time_zone="UTC")
+            .alias("prediction_dt"),
+            pl.col("snapshot_retrieved_at_utc")
+            .str.to_datetime(time_zone="UTC")
+            .alias("snapshot_dt"),
+            pl.col("feature_as_of_utc").str.to_datetime(time_zone="UTC").alias("feature_dt"),
+            pl.col("pinnacle_updated_at_utc").str.to_datetime(time_zone="UTC").alias("pinnacle_dt"),
+        )
+        if temporal.filter(
+            (pl.col("prediction_dt") >= pl.col("kickoff_dt"))
+            | (pl.col("snapshot_dt") >= pl.col("kickoff_dt"))
+            | (pl.col("prediction_dt") < pl.col("snapshot_dt"))
+        ).height:
+            raise DataQualityError("Prospective prediction violates snapshot/kickoff ordering")
+        if temporal.filter(
+            pl.col("feature_dt").is_not_null() & (pl.col("feature_dt") >= pl.col("snapshot_dt"))
+        ).height:
+            raise DataQualityError("Prospective features do not predate their odds snapshot")
+        eligible = temporal.filter(pl.col("eligibility_status") == "ELIGIBLE_CLOSE_PROXY")
+        if eligible.height:
+            required = [
+                "pinnacle_line",
+                "pinnacle_orientation_no_vig_probability",
+                "final_projection",
+                "calibrated_non_push_win_probability",
+                "pinnacle_dt",
+            ]
+            if any(eligible[column].null_count() for column in required):
+                raise DataQualityError("Eligible prediction is missing scoring fields")
+            minutes = (pl.col("kickoff_dt") - pl.col("snapshot_dt")).dt.total_minutes()
+            age = (pl.col("snapshot_dt") - pl.col("pinnacle_dt")).dt.total_minutes()
+            if eligible.filter(
+                (minutes < 5)
+                | (minutes > 90)
+                | (age < 0)
+                | (age > int(policy["quote_max_age_minutes"]))
+                | (pl.col("kickoff_dt") <= pl.lit(cutoff))
+            ).height:
+                raise DataQualityError("Eligible prediction violates the frozen close contract")
+    if evaluations.height:
+        if (
+            evaluations.filter(pl.col("eligible_non_push") == 1)
+            .filter(~pl.col("result").is_in(["WIN", "LOSS"]))
+            .height
+        ):
+            raise DataQualityError("Eligible prospective score is not a win or loss")
+        scored = evaluations.filter(pl.col("eligible_non_push") == 1)
+        score_columns = [
+            "model_brier",
+            "market_brier",
+            "model_log_loss",
+            "market_log_loss",
+        ]
+        if scored.height and any(scored[column].null_count() for column in score_columns):
+            raise DataQualityError("Eligible evaluation is missing probability scores")
+        pushes = evaluations.filter(pl.col("result") == "PUSH")
+        if pushes.height and (
+            int(pushes["eligible_non_push"].sum())
+            or any(pushes[column].drop_nulls().len() for column in score_columns)
+        ):
+            raise DataQualityError("Pushes entered prospective probability scoring")
+        referenced = evaluations.filter(pl.col("prediction_id").is_not_null())
+        if referenced.height:
+            unmatched = referenced.select("prediction_id").join(
+                predictions.select("prediction_id"), on="prediction_id", how="anti"
+            )
+            if unmatched.height:
+                raise DataQualityError("Evaluation references an unknown prediction")
+    return {
+        "status": "VALID",
+        "model_version": policy["model_version"],
+        "predictions": predictions.height,
+        "evaluations": evaluations.height,
+        "decision_policy": "PASS-only",
+    }
+
+
 def validate_all(settings: Settings | None = None) -> dict[str, Any]:
     resolved = settings or get_settings()
     initialize_database(resolved)
@@ -311,7 +474,9 @@ def validate_all(settings: Settings | None = None) -> dict[str, Any]:
             frame = pl.read_csv(csv_path, infer_schema_length=100_000)
             loaded[name] = frame
             if tuple(frame.columns) != schema.columns:
-                raise DataQualityError(f"{name}.csv columns do not match schema version 1.0.0")
+                raise DataQualityError(
+                    f"{name}.csv columns do not match schema version {resolved.schema_version}"
+                )
             if table_columns(connection, name) != schema.columns:
                 raise DataQualityError(f"SQLite table {name} does not match its CSV contract")
             duplicates = frame.group_by(schema.primary_key).len().filter(pl.col("len") > 1)
@@ -394,11 +559,14 @@ def validate_all(settings: Settings | None = None) -> dict[str, Any]:
     results["model_coverage"] = coverage
     if coverage.get("excluded_games"):
         exclusions = pl.DataFrame(coverage["excluded_games"])
-        atomic_write_text(
-            resolved.reports_dir / "data_exclusions.csv", exclusions.write_csv()
-        )
+        atomic_write_text(resolved.reports_dir / "data_exclusions.csv", exclusions.write_csv())
     if coverage.get("breaches"):
         raise DataQualityError("; ".join(coverage["breaches"]))
     results["v11"] = _validate_v11(resolved)
+    results["prospective"] = _validate_prospective(
+        resolved,
+        loaded["model_predictions"],
+        loaded["prospective_evaluations"],
+    )
     results["status"] = "VALID"
     return results

@@ -42,7 +42,7 @@ class Settings(BaseSettings):
     weekly_call_limit: int = 20
     manual_call_reserve: int = 4
     schedule_match_tolerance_hours: int = 8
-    schema_version: str = "1.0.0"
+    schema_version: str = "1.1.0"
     the_odds_api_key: SecretStr | None = Field(default=None, validation_alias="THE_ODDS_API_KEY")
 
     def model_post_init(self, __context: object) -> None:

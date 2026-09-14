@@ -14,6 +14,13 @@ from nfl_bets.features.v11 import build_v11_features
 from nfl_bets.model.training import test_model, train_model
 from nfl_bets.model.v11 import train_v11_model
 from nfl_bets.odds.client import snapshot_odds
+from nfl_bets.pilot import capture_pilot_slot, pilot_status
+from nfl_bets.prospective import (
+    predict_snapshot,
+    run_prospective_test,
+    settle_predictions,
+    write_prospective_report,
+)
 from nfl_bets.validation import validate_all
 
 app = typer.Typer(
@@ -29,12 +36,14 @@ db_app = typer.Typer(help="Initialize local persistence.", no_args_is_help=True)
 v11_app = typer.Typer(help="Develop the post-V1 prospective model.", no_args_is_help=True)
 v11_features_app = typer.Typer(help="Build V1.1 feature inputs.", no_args_is_help=True)
 v11_model_app = typer.Typer(help="Freeze V1.1 candidates.", no_args_is_help=True)
+pilot_app = typer.Typer(help="Run and verify the manual odds-capture pilot.", no_args_is_help=True)
 app.add_typer(data_app, name="data")
 app.add_typer(features_app, name="features")
 app.add_typer(model_app, name="model")
 app.add_typer(odds_app, name="odds")
 app.add_typer(db_app, name="db")
 app.add_typer(v11_app, name="v11")
+app.add_typer(pilot_app, name="pilot")
 v11_app.add_typer(v11_features_app, name="features")
 v11_app.add_typer(v11_model_app, name="model")
 console = Console()
@@ -115,6 +124,42 @@ def v11_model_train(
     _print_result(train_v11_model(version))
 
 
+@v11_app.command("predict")
+def v11_predict(
+    snapshot_id: Annotated[
+        str,
+        typer.Option("--snapshot-id", help="Completed raw/parsed odds snapshot identifier."),
+    ],
+    version: Annotated[str, typer.Option("--version")] = "1.1.2",
+) -> None:
+    """Append immutable V1.1 observer predictions; every decision is PASS."""
+    _print_result(predict_snapshot(snapshot_id=snapshot_id, version=version))
+
+
+@v11_app.command("checkpoint")
+def v11_checkpoint(
+    through_week: Annotated[int, typer.Option("--through-week")],
+    version: Annotated[str, typer.Option("--version")] = "1.1.2",
+) -> None:
+    """Write a descriptive prospective checkpoint without consuming the formal test."""
+    _print_result(
+        write_prospective_report(
+            version=version,
+            through_week=through_week,
+            checkpoint=True,
+        )
+    )
+
+
+@v11_app.command("test")
+def v11_test(
+    through_week: Annotated[int, typer.Option("--through-week")],
+    version: Annotated[str, typer.Option("--version")] = "1.1.2",
+) -> None:
+    """Run or safely defer the one-time frozen 2026 prospective test."""
+    _print_result(run_prospective_test(through_week=through_week, version=version))
+
+
 @odds_app.command("snapshot")
 def odds_snapshot(
     slot: Annotated[
@@ -124,6 +169,48 @@ def odds_snapshot(
 ) -> None:
     """Retrieve one consolidated spreads/totals board without automatic retries."""
     _print_result(snapshot_odds(slot))
+
+
+@pilot_app.command("capture")
+def pilot_capture(
+    slot: Annotated[str, typer.Option("--slot", help="One configured weekly slot name.")],
+    version: Annotated[str, typer.Option("--version")] = "1.1.2",
+) -> None:
+    """Manually capture one board and immediately add PASS-only predictions."""
+    _print_result(capture_pilot_slot(slot=slot, version=version))
+
+
+@pilot_app.command("status")
+def show_pilot_status(
+    week_bucket: Annotated[
+        str | None,
+        typer.Option("--week-bucket", help="Tuesday-start date, for example 2026-09-15."),
+    ] = None,
+    version: Annotated[str, typer.Option("--version")] = "1.1.2",
+) -> None:
+    """Verify that every manual slot produced intact raw data and PASS predictions."""
+    _print_result(pilot_status(week_bucket=week_bucket, version=version))
+
+
+@app.command("settle")
+def settle(
+    through: Annotated[
+        str,
+        typer.Option("--through", help="Timezone-aware ISO-8601 settlement cutoff."),
+    ],
+    version: Annotated[str, typer.Option("--version")] = "1.1.2",
+) -> None:
+    """Append results for completed post-freeze games without changing predictions."""
+    parsed_through = datetime.fromisoformat(through.replace("Z", "+00:00"))
+    _print_result(settle_predictions(parsed_through, version=version))
+
+
+@app.command("report")
+def report(
+    version: Annotated[str, typer.Option("--version")] = "1.1.2",
+) -> None:
+    """Write current prospective coverage, calibration, and scoring reports."""
+    _print_result(write_prospective_report(version=version))
 
 
 @app.command("validate")

@@ -1,0 +1,41 @@
+{
+  "adjustment_contract": "closing_market_projection + frozen_weight * ridge_residual_adjustment",
+  "allowed_decisions": [
+    "PASS"
+  ],
+  "artifact_hash": "6590a4bbb77802175afa4c406de831d596569cbf2e1f596de7df0910f43e8fd5",
+  "canonical_bookmaker": "pinnacle",
+  "close_window_minutes_before_kickoff": {
+    "earliest": 90,
+    "latest": 5
+  },
+  "development_feature_hash": "70b9b68910f27223b233830d9d0354cce128dce5bf39ef4fcd175d576bc8d64f",
+  "formal_test_minimum_week": 8,
+  "formal_test_once": true,
+  "freeze_commit": "44620597db8e2aee1449acbf8128ea222ab8fce5",
+  "freeze_tag": "v1.1.2-prospective-freeze",
+  "frozen_feature_input_hash": "82bca56d8369d41212515d7d08351e32507304744e010ef5f39ea4798e22d302",
+  "market_orientation": {
+    "spreads": "HOME",
+    "totals": "OVER"
+  },
+  "metadata_hash": "b6c09bfb3a526520c796a70f8947845a2a23de8f41ae4ebe455225d517ef5ddf",
+  "minimum_non_push_observations_per_market": 100,
+  "model_version": "1.1.2",
+  "prospective_start_utc": "2026-09-14T01:53:59.778571Z",
+  "quote_max_age_minutes": 30,
+  "schema_version": "1.1.0",
+  "selected_configuration": {
+    "half_life": 1.0,
+    "prior_strength": 0.25,
+    "spread_adjustment_weight": 0.0,
+    "spread_ridge_alpha": 0.1,
+    "total_adjustment_weight": 0.1161508759454473,
+    "total_ridge_alpha": 100.0
+  },
+  "selection_rule_version": "1.0.0",
+  "spec_hash": "e51f21289a5f63ada7c1746ad6385412db3f6a4e7fc3ba4e33e43fbdb6e9bf14",
+  "status": "LOCKED_UNTESTED_2026",
+  "test_season": 2026,
+  "uncertainty_status": "UNAVAILABLE_FOR_BETTING"
+}
