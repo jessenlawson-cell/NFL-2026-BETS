@@ -187,7 +187,8 @@ def load_frozen_bundle(
         raise FileNotFoundError(f"Frozen model files are missing for {version}")
     artifact_hash = sha256_bytes(artifact_path.read_bytes())
     metadata_hash = sha256_bytes(metadata_path.read_bytes())
-    spec_hash = sha256_bytes((resolved.root / "MODEL_SPEC_V1_1.md").read_bytes())
+    spec_bytes = (resolved.root / "MODEL_SPEC_V1_1.md").read_bytes().replace(b"\r\n", b"\n")
+    spec_hash = sha256_bytes(spec_bytes)
     if manifest.get("artifact_hash") != artifact_hash:
         raise ProspectiveDataError("Frozen model manifest artifact hash mismatch")
     if manifest.get("metadata_hash") != metadata_hash:

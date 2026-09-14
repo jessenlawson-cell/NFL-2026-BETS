@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import tomllib
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -8,8 +9,226 @@ from typing import Any
 from nfl_bets.config import Settings, get_settings
 from nfl_bets.db import connect, initialize_database
 from nfl_bets.odds.client import SCHEDULED_SLOTS, _week_bucket, snapshot_odds
-from nfl_bets.prospective import DEFAULT_MODEL_VERSION, predict_snapshot
+from nfl_bets.prospective import DEFAULT_MODEL_VERSION, load_frozen_bundle, predict_snapshot
 from nfl_bets.util import atomic_write_text, sha256_bytes
+
+PREFLIGHT_REQUIRED_FILES = (
+    "games.csv",
+    "team_metrics.csv",
+    "model_history.csv",
+    "MODEL_SPEC_V1_1.md",
+)
+PREFLIGHT_REQUIRED_TABLES = {
+    "api_requests",
+    "games",
+    "market_odds",
+    "model_predictions",
+    "prospective_evaluations",
+}
+
+
+def _running_in_container() -> bool:
+    return Path("/.dockerenv").exists()
+
+
+def _runtime_paths_aligned(settings: Settings) -> bool:
+    return settings.root == Path("/workspace")
+
+
+def _check(name: str, passed: bool, detail: str, *, blocking: bool = True) -> dict[str, Any]:
+    return {
+        "name": name,
+        "status": "PASS" if passed else ("FAIL" if blocking else "WARNING"),
+        "blocking": blocking,
+        "detail": detail,
+    }
+
+
+def preflight_pilot(
+    slot: str | None = None,
+    version: str = DEFAULT_MODEL_VERSION,
+    settings: Settings | None = None,
+) -> dict[str, Any]:
+    """Verify capture readiness without contacting the odds provider."""
+    resolved = settings or get_settings()
+    checks: list[dict[str, Any]] = []
+    now = datetime.now(UTC)
+    bucket = _week_bucket(now, resolved)
+
+    in_container = _running_in_container()
+    checks.append(
+        _check(
+            "docker_runtime",
+            in_container,
+            "Running inside Docker." if in_container else "Run through Docker Compose.",
+        )
+    )
+    root_aligned = _runtime_paths_aligned(resolved) if in_container else False
+    checks.append(
+        _check(
+            "runtime_paths",
+            root_aligned,
+            f"Repository root is {resolved.root}.",
+        )
+    )
+
+    key = resolved.the_odds_api_key
+    key_present = bool(key and key.get_secret_value().strip())
+    checks.append(
+        _check(
+            "api_key",
+            key_present,
+            "API key is present (value hidden)." if key_present else "THE_ODDS_API_KEY is missing.",
+        )
+    )
+
+    missing_files = [
+        name for name in PREFLIGHT_REQUIRED_FILES if not (resolved.root / name).is_file()
+    ]
+    checks.append(
+        _check(
+            "authoritative_files",
+            not missing_files,
+            "Required files are present."
+            if not missing_files
+            else f"Missing: {', '.join(missing_files)}",
+        )
+    )
+
+    schedule_path = resolved.root / "config" / "scheduled_slots.toml"
+    schedule_ok = False
+    schedule_detail = "Schedule configuration is missing."
+    try:
+        schedule = tomllib.loads(schedule_path.read_text(encoding="utf-8"))
+        configured_slots = set(schedule.get("slots", {}))
+        schedule_ok = (
+            configured_slots == SCHEDULED_SLOTS
+            and schedule.get("timezone") == resolved.timezone
+            and schedule.get("weekly_call_limit") == resolved.weekly_call_limit
+            and schedule.get("manual_reserve") == resolved.manual_call_reserve
+        )
+        schedule_detail = (
+            f"All {len(SCHEDULED_SLOTS)} slots match {resolved.timezone}."
+            if schedule_ok
+            else "Schedule settings do not match runtime safeguards."
+        )
+    except (OSError, tomllib.TOMLDecodeError):
+        pass
+    checks.append(_check("schedule", schedule_ok, schedule_detail))
+
+    slot_ok = slot is None or slot in SCHEDULED_SLOTS
+    checks.append(
+        _check(
+            "requested_slot",
+            slot_ok,
+            "No slot selected; general readiness only."
+            if slot is None
+            else (f"Configured slot: {slot}." if slot_ok else f"Unknown slot: {slot}."),
+        )
+    )
+
+    database_ok = False
+    database_detail = "Database could not be checked."
+    quota_detail = "Quota could not be checked."
+    quota_ok = False
+    provider_detail = "No provider quota header has been recorded yet."
+    provider_ok = True
+    provider_blocking = False
+    duplicate_ok = True
+    duplicate_detail = "No completed capture exists for the selected slot."
+    try:
+        initialize_database(resolved)
+        with connect(resolved) as connection:
+            quick_check = str(connection.execute("PRAGMA quick_check").fetchone()[0])
+            tables = {
+                str(row[0])
+                for row in connection.execute("SELECT name FROM sqlite_master WHERE type='table'")
+            }
+            database_ok = quick_check == "ok" and tables >= PREFLIGHT_REQUIRED_TABLES
+            database_detail = (
+                "SQLite integrity and required tables are valid."
+                if database_ok
+                else "SQLite integrity or required tables failed validation."
+            )
+            total = int(
+                connection.execute(
+                    "SELECT COUNT(*) FROM api_requests WHERE week_bucket=?", (bucket,)
+                ).fetchone()[0]
+            )
+            scheduled = int(
+                connection.execute(
+                    "SELECT COUNT(*) FROM api_requests WHERE week_bucket=? AND slot!='manual'",
+                    (bucket,),
+                ).fetchone()[0]
+            )
+            local_remaining = resolved.weekly_call_limit - total
+            scheduled_remaining = (
+                resolved.weekly_call_limit - resolved.manual_call_reserve - scheduled
+            )
+            quota_ok = local_remaining > 0 and scheduled_remaining > 0
+            quota_detail = (
+                f"Local guard: {local_remaining} total and {scheduled_remaining} "
+                "scheduled requests remain."
+            )
+            provider_row = connection.execute(
+                "SELECT provider_requests_remaining FROM api_requests "
+                "WHERE provider_requests_remaining IS NOT NULL "
+                "ORDER BY completed_at_utc DESC LIMIT 1"
+            ).fetchone()
+            if provider_row is not None:
+                provider_remaining = int(provider_row[0])
+                provider_ok = provider_remaining >= 2
+                provider_blocking = True
+                provider_detail = f"Last recorded provider balance: {provider_remaining} credits."
+            if slot_ok and slot is not None:
+                duplicate = connection.execute(
+                    "SELECT 1 FROM api_requests WHERE week_bucket=? AND slot=? "
+                    "AND status='COMPLETE' LIMIT 1",
+                    (bucket, slot),
+                ).fetchone()
+                duplicate_ok = duplicate is None
+                duplicate_detail = (
+                    "No completed capture exists for this slot."
+                    if duplicate_ok
+                    else "This slot is already complete; do not spend credits twice."
+                )
+    except Exception as exc:  # converted to a safe readiness result
+        database_detail = f"Database check failed: {type(exc).__name__}."
+    checks.extend(
+        [
+            _check("database", database_ok, database_detail),
+            _check("local_quota", quota_ok, quota_detail),
+            _check("provider_quota", provider_ok, provider_detail, blocking=provider_blocking),
+            _check("duplicate_slot", duplicate_ok, duplicate_detail),
+        ]
+    )
+
+    try:
+        bundle = load_frozen_bundle(version=version, settings=resolved)
+        model_ok = bundle.policy.get("status") == "LOCKED_UNTESTED_2026"
+        model_detail = (
+            f"Frozen model {version} passed artifact and source checks."
+            if model_ok
+            else f"Frozen model {version} has an invalid status."
+        )
+    except Exception as exc:  # never expose paths or secret-bearing exception text
+        model_ok = False
+        model_detail = f"Frozen model check failed: {type(exc).__name__}."
+    checks.append(_check("frozen_model", model_ok, model_detail))
+
+    ready = all(row["status"] != "FAIL" for row in checks)
+    return {
+        "status": "READY" if ready else "NOT_READY",
+        "safe_to_capture": ready,
+        "zero_credit_check": True,
+        "provider_contacted": False,
+        "checked_at_utc": now.isoformat().replace("+00:00", "Z"),
+        "week_bucket": bucket,
+        "slot": slot,
+        "model_version": version,
+        "decision_policy": "PASS-only",
+        "checks": checks,
+    }
 
 
 def capture_pilot_slot(

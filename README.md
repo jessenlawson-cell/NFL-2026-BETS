@@ -101,8 +101,14 @@ the corresponding PASS-only predictions. It does not retry an ambiguous request.
 with:
 
 ```powershell
+docker compose run --rm nfl-bets pilot preflight --slot monday_1200
 docker compose run --rm nfl-bets pilot status --week-bucket 2026-09-15
 ```
+
+`pilot preflight` contacts no provider and spends no credits. It returns `READY` only when the
+Docker runtime, local paths, hidden API-key presence, SQLite database, frozen model identity,
+schedule, local quota, and duplicate-slot guard all pass. A provider balance is checked when a
+previous response has supplied one; otherwise it is reported as a non-blocking warning.
 
 Only after that report says `PASSED` may the Windows tasks be installed:
 

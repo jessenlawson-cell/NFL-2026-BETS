@@ -29,9 +29,14 @@ Store the API key only in the local `.env` file as `THE_ODDS_API_KEY`. Run each 
 hand for one full Tuesday-to-Monday collection week:
 
 ```powershell
+docker compose run --rm nfl-bets pilot preflight --slot sunday_open_2000
 docker compose run --rm nfl-bets pilot capture --slot sunday_open_2000
 docker compose run --rm nfl-bets pilot status --week-bucket YYYY-MM-DD
 ```
+
+Run `pilot preflight` before a capture. It is a local-only, zero-credit check and never displays
+the API key. `READY` confirms the container paths, key presence, database, frozen artifact,
+schedule, quota guard, and absence of an already completed capture for that slot.
 
 Repeat `pilot capture` using each name in `config/scheduled_slots.toml`. Each capture is one
 consolidated spreads/totals request, normally charged as two provider credits. Ambiguous failures

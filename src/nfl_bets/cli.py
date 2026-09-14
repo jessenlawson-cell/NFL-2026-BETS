@@ -14,7 +14,7 @@ from nfl_bets.features.v11 import build_v11_features
 from nfl_bets.model.training import test_model, train_model
 from nfl_bets.model.v11 import train_v11_model
 from nfl_bets.odds.client import snapshot_odds
-from nfl_bets.pilot import capture_pilot_slot, pilot_status
+from nfl_bets.pilot import capture_pilot_slot, pilot_status, preflight_pilot
 from nfl_bets.prospective import (
     predict_snapshot,
     run_prospective_test,
@@ -178,6 +178,18 @@ def pilot_capture(
 ) -> None:
     """Manually capture one board and immediately add PASS-only predictions."""
     _print_result(capture_pilot_slot(slot=slot, version=version))
+
+
+@pilot_app.command("preflight")
+def pilot_preflight(
+    slot: Annotated[
+        str | None,
+        typer.Option("--slot", help="Optional configured slot to check for duplicate capture."),
+    ] = None,
+    version: Annotated[str, typer.Option("--version")] = "1.1.2",
+) -> None:
+    """Check capture readiness without contacting the odds provider or spending credits."""
+    _print_result(preflight_pilot(slot=slot, version=version))
 
 
 @pilot_app.command("status")
