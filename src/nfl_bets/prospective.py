@@ -91,8 +91,31 @@ def _run_git(root: Path, *arguments: str) -> str:
     return result.stdout.strip()
 
 
+def _git_diff_has_content(root: Path, paths: list[str], *, cached: bool = False) -> bool:
+    arguments = ["git", "-c", f"safe.directory={root}", "diff"]
+    if cached:
+        arguments.append("--cached")
+    arguments.extend(["--quiet", "--ignore-space-at-eol", "--", *paths])
+    result = subprocess.run(arguments, cwd=root, capture_output=True)
+    if result.returncode not in (0, 1):
+        raise subprocess.CalledProcessError(result.returncode, arguments)
+    return result.returncode == 1
+
+
 def _verify_git_identity(settings: Settings, policy: dict[str, Any]) -> str:
     try:
+        protected_paths = [
+            "src",
+            "pyproject.toml",
+            "requirements.txt",
+            "requirements.lock",
+            "Dockerfile",
+            "docker-compose.yml",
+            "MODEL_SPEC.md",
+            "MODEL_SPEC_V1_1.md",
+            f"manifests/model_{policy['model_version']}_development.json",
+            f"manifests/prospective_policy_{policy['model_version']}.json",
+        ]
         commit = _run_git(settings.root, "rev-parse", "HEAD")
         tagged_commit = _run_git(settings.root, "rev-list", "-n", "1", str(policy["freeze_tag"]))
         if tagged_commit != policy["freeze_commit"]:
@@ -113,26 +136,19 @@ def _verify_git_identity(settings: Settings, policy: dict[str, Any]) -> str:
             check=True,
             capture_output=True,
         )
-        status = _run_git(
+        untracked = _run_git(
             settings.root,
-            "status",
-            "--porcelain",
-            "--untracked-files=all",
+            "ls-files",
+            "--others",
+            "--exclude-standard",
             "--",
-            "src",
-            "pyproject.toml",
-            "requirements.txt",
-            "requirements.lock",
-            "Dockerfile",
-            "docker-compose.yml",
-            "MODEL_SPEC.md",
-            "MODEL_SPEC_V1_1.md",
-            f"manifests/model_{policy['model_version']}_development.json",
-            f"manifests/prospective_policy_{policy['model_version']}.json",
+            *protected_paths,
         )
+        dirty_content = _git_diff_has_content(settings.root, protected_paths)
+        dirty_index = _git_diff_has_content(settings.root, protected_paths, cached=True)
     except (KeyError, OSError, subprocess.CalledProcessError) as exc:
         raise ProspectiveDataError("Unable to verify the prospective Git identity") from exc
-    if status:
+    if untracked or dirty_content or dirty_index:
         raise ProspectiveDataError(
             "Tracked model code or specifications are dirty; commit them before predicting"
         )
