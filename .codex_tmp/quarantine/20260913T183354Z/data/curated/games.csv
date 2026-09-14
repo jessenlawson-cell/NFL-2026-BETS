@@ -1,0 +1,2 @@
+game_id,season,week,game_type,kickoff_utc,away_team,home_team,away_score,home_score,result,total,away_rest,home_rest,away_moneyline,home_moneyline,spread_line,away_spread_odds,home_spread_odds,total_line,under_odds,over_odds,roof,surface,temp,wind,source,retrieved_at_utc,source_updated_at_utc,schema_version,content_hash
+2025_01_NYJ_BUF,2025,1,REG,2025-09-07T17:00:00Z,NYJ,BUF,17,24,7,41,7,7,,,6.5,-110,-110,44.5,-110,-110,,,,,nflverse:nflreadpy,2026-09-13T18:12:40.634070Z,,1.0.0,3593f2e58cb0e418a7988d2852808e5ed084b1c3e606905b10583c25e3e9f984

@@ -1,0 +1,13 @@
+{
+  "created_at_utc": "2026-09-13T18:12:42.152034Z",
+  "development_end_season": 2024,
+  "feature_hash": "0aca4d25dd98d0e644bfe1a6b3e88037206d320d10d79b3f7828d629487c157c",
+  "spec_hash": "MISSING",
+  "spread_market_alpha": 0.018935402955021708,
+  "spread_ridge_alpha": 1.0,
+  "status": "LOCKED_UNTESTED",
+  "total_market_alpha": 1.0,
+  "total_ridge_alpha": 1.0,
+  "training_rows": 300,
+  "version": "fixture-v1"
+}

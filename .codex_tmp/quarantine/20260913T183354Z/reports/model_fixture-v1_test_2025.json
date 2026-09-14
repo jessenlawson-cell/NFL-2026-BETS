@@ -1,0 +1,43 @@
+{
+  "model_version": "fixture-v1",
+  "promotion_rule": "Both Brier and log loss must beat no-vig close for both markets; calibration intercept must be within +/-0.20 and slope within [0.50, 1.50].",
+  "rows": 101,
+  "spread": {
+    "calibration": {
+      "intercept": 0.08237469229966995,
+      "slope": 1.116091373721128
+    },
+    "candidate": {
+      "brier": 0.24401553687571026,
+      "log_loss": 0.680554471164333
+    },
+    "final_mae": 0.4916366643472134,
+    "final_rmse": 0.4973158783415293,
+    "market": {
+      "brier": 9.802960494069223e-05,
+      "log_loss": 0.009950330853168094
+    },
+    "raw_mae": 3.435158080843292,
+    "raw_rmse": 3.958261110518641
+  },
+  "status": "PASS_ONLY",
+  "test_season": 2025,
+  "total": {
+    "calibration": {
+      "intercept": -0.845148676044507,
+      "slope": 0.19739196772908701
+    },
+    "candidate": {
+      "brier": 0.11255107160405578,
+      "log_loss": 0.5306326664907846
+    },
+    "final_mae": 3.435158080843292,
+    "final_rmse": 3.9582611105186403,
+    "market": {
+      "brier": 0.6115086756200374,
+      "log_loss": 2.882482229043759
+    },
+    "raw_mae": 3.435158080843292,
+    "raw_rmse": 3.9582611105186403
+  }
+}

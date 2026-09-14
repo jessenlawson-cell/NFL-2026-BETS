@@ -1,0 +1,2 @@
+season,week,game_id,player_id,player_name,team_id,position,offense_snaps,offense_pct,defense_snaps,defense_pct,special_teams_snaps,special_teams_pct,source,retrieved_at_utc,source_updated_at_utc,schema_version,content_hash
+2025,1,2025_01_NYJ_BUF,Fixture00,Fixture Player,BUF,QB,60,1.0,0,0.0,0,0.0,nflverse:nflreadpy,2026-09-13T18:12:40.634070Z,,1.0.0,81e156d593b978919caffac17baeb508a99e39611aebd9618cc581bcde6bed83
