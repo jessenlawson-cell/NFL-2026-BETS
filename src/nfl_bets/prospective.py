@@ -19,6 +19,7 @@ from nfl_bets.features.build import materialize_feature_configuration, validate_
 from nfl_bets.features.v11 import V11_METRICS
 from nfl_bets.model.training import _append_history
 from nfl_bets.model.v11 import V11_FEATURE_COLUMNS, V11Candidate, _matchup_expressions
+from nfl_bets.odds.consensus import american_to_decimal, implied_probability
 from nfl_bets.schemas import ARTIFACT_SCHEMAS
 from nfl_bets.util import atomic_write_text, canonical_hash, iso_utc, sha256_bytes
 
@@ -577,6 +578,8 @@ def predict_snapshot(
         }
     if snapshot_row is None:
         raise ProspectiveDataError(f"Raw snapshot {snapshot_id} does not exist")
+    if snapshot_row["snapshot_purpose"] != "DECISION":
+        raise ProspectiveDataError("Only an immutable DECISION snapshot can create predictions")
     if request_row is None or request_row["status"] != "COMPLETE":
         raise ProspectiveDataError("Only a completely parsed odds snapshot can be predicted")
     snapshot_time = _parse_utc(snapshot_row["retrieved_at_utc"], "snapshot retrieval time")
@@ -723,6 +726,8 @@ def select_canonical_prediction(
     max_age = timedelta(minutes=int(policy["quote_max_age_minutes"]))
     valid: list[dict[str, Any]] = []
     for row in predictions:
+        if row.get("snapshot_purpose") != "DECISION":
+            continue
         if row.get("eligibility_status") != ELIGIBLE_CLOSE_STATUS:
             continue
         snapshot_time = _parse_utc(row["snapshot_retrieved_at_utc"], "snapshot time")
@@ -752,6 +757,135 @@ def select_canonical_prediction(
             str(row["prediction_id"]),
         ),
     )
+
+
+def select_canonical_close(
+    quotes: list[dict[str, Any]],
+    kickoff: datetime,
+    policy: dict[str, Any],
+) -> dict[str, Any] | None:
+    """Select a CLOSE quote from market data alone, without consulting predictions."""
+    if kickoff.tzinfo is None:
+        raise ValueError("Kickoff must be timezone-aware")
+    kickoff = kickoff.astimezone(UTC)
+    window = cast(dict[str, Any], policy["close_window_minutes_before_kickoff"])
+    earliest = float(window["earliest"])
+    latest = float(window["latest"])
+    grouped: dict[tuple[str, str, str], list[dict[str, Any]]] = {}
+    for row in quotes:
+        if row.get("snapshot_purpose") != "CLOSE":
+            continue
+        grouped.setdefault(
+            (str(row["snapshot_id"]), str(row["provider_event_id"]), str(row["market"])),
+            [],
+        ).append(row)
+    valid: list[dict[str, Any]] = []
+    for (snapshot_id, event_id, market), rows in grouped.items():
+        snapshot_time = _parse_utc(rows[0]["retrieved_at_utc"], "close snapshot time")
+        minutes = (kickoff - snapshot_time).total_seconds() / 60.0
+        if not latest <= minutes <= earliest:
+            continue
+        contract = _anchor_contract(
+            rows,
+            market,
+            snapshot_time,
+            int(policy["quote_max_age_minutes"]),
+        )
+        if not contract.valid or contract.line is None:
+            continue
+        valid.append(
+            {
+                "snapshot_id": snapshot_id,
+                "provider_event_id": event_id,
+                "game_id": rows[0]["game_id"],
+                "market": market,
+                "snapshot_retrieved_at_utc": iso_utc(snapshot_time),
+                "pinnacle_updated_at_utc": (
+                    iso_utc(contract.updated_at) if contract.updated_at is not None else None
+                ),
+                "pinnacle_line": contract.line,
+                "pinnacle_orientation_price": contract.orientation_price,
+                "pinnacle_other_price": contract.other_price,
+                "pinnacle_orientation_no_vig_probability": contract.orientation_probability,
+            }
+        )
+    if not valid:
+        return None
+    return max(
+        valid,
+        key=lambda row: (
+            _parse_utc(row["snapshot_retrieved_at_utc"], "close snapshot time"),
+            str(row["snapshot_id"]),
+        ),
+    )
+
+
+def _logit(probability: float) -> float:
+    clipped = float(np.clip(probability, 1e-8, 1 - 1e-8))
+    return math.log(clipped / (1.0 - clipped))
+
+
+def _logistic(value: float) -> float:
+    return 1.0 / (1.0 + math.exp(-value))
+
+
+def _closing_contract_distribution(
+    candidate: V11Candidate,
+    market: str,
+    closing_line: float,
+    closing_probability: float,
+    decision_line: float,
+) -> tuple[float, float, float]:
+    """Anchor the frozen empirical shape to the closing price, preserving push mass."""
+    mapper = candidate.spread_residuals if market == "spreads" else candidate.total_residuals
+    baseline_close = mapper.probabilities(closing_line, closing_line, closing_line)
+    close_non_push = baseline_close.win + baseline_close.loss
+    if close_non_push <= 0.0:
+        raise ProspectiveDataError("Closing distribution has no non-push mass")
+    baseline_conditional = baseline_close.win / close_non_push
+    logit_offset = _logit(closing_probability) - _logit(baseline_conditional)
+    decision_contract = mapper.probabilities(closing_line, decision_line, closing_line)
+    decision_non_push = decision_contract.win + decision_contract.loss
+    if decision_non_push <= 0.0:
+        raise ProspectiveDataError("Decision contract has no non-push mass")
+    adjusted_conditional = _logistic(
+        _logit(decision_contract.win / decision_non_push) + logit_offset
+    )
+    win = (1.0 - decision_contract.push) * adjusted_conditional
+    loss = (1.0 - decision_contract.push) * (1.0 - adjusted_conditional)
+    return float(win), float(decision_contract.push), float(loss)
+
+
+def _key_number_movement(
+    market: str, decision_line: float, closing_line: float
+) -> tuple[list[int], str]:
+    if market != "spreads":
+        return [], "NOT_APPLICABLE"
+    signed_keys = tuple(sign * key for key in (3, 6, 7, 10, 14) for sign in (-1, 1))
+    low, high = sorted((decision_line, closing_line))
+    crossed = sorted(key for key in signed_keys if low < key < high)
+    touched = sorted(
+        key
+        for key in signed_keys
+        if math.isclose(decision_line, key, abs_tol=1e-9)
+        or math.isclose(closing_line, key, abs_tol=1e-9)
+    )
+    relevant = crossed or touched
+    if crossed:
+        label = (
+            "CROSSED_PRIMARY_KEY"
+            if any(abs(key) in {3, 7} for key in crossed)
+            else "CROSSED_KEY"
+        )
+    elif touched:
+        label = (
+            "TOUCHED_PRIMARY_KEY"
+            if any(abs(key) in {3, 7} for key in touched)
+            else "TOUCHED_KEY"
+        )
+    else:
+        label = "NO_KEY_CROSSING"
+    return relevant, label
 
 
 def _binary_scores(probability: float, outcome: int) -> tuple[float, float]:
@@ -789,16 +923,33 @@ def settle_predictions(
         predictions = [
             dict(row)
             for row in connection.execute(
-                "SELECT * FROM model_predictions WHERE model_version=? "
+                "SELECT p.*,r.snapshot_purpose FROM model_predictions p "
+                "JOIN raw_snapshots r ON r.snapshot_id=p.snapshot_id "
+                "WHERE p.model_version=? "
                 "ORDER BY game_id,market,snapshot_retrieved_at_utc",
                 (version,),
+            )
+        ]
+        close_quotes = [
+            dict(row)
+            for row in connection.execute(
+                "SELECT o.*,r.snapshot_purpose FROM market_odds o "
+                "JOIN raw_snapshots r ON r.snapshot_id=o.snapshot_id "
+                "WHERE r.snapshot_purpose='CLOSE' "
+                "ORDER BY o.game_id,o.market,o.retrieved_at_utc,o.snapshot_id,"
+                "o.bookmaker_key,o.selection"
             )
         ]
     by_game_market: dict[tuple[str, str], list[dict[str, Any]]] = {}
     for prediction in predictions:
         key = (str(prediction["game_id"]), str(prediction["market"]))
         by_game_market.setdefault(key, []).append(prediction)
+    close_by_game_market: dict[tuple[str, str], list[dict[str, Any]]] = {}
+    for quote in close_quotes:
+        key = (str(quote["game_id"]), str(quote["market"]))
+        close_by_game_market.setdefault(key, []).append(quote)
     records: list[dict[str, Any]] = []
+    bundle: FrozenBundle | None = None
     for game in games:
         kickoff = _parse_utc(game["kickoff_utc"], "game kickoff")
         if kickoff <= cutoff or kickoff > through:
@@ -809,14 +960,19 @@ def settle_predictions(
             ("spreads", home_margin, "HOME"),
             ("totals", combined_total, "OVER"),
         ):
-            canonical = select_canonical_prediction(
+            decision = select_canonical_prediction(
                 by_game_market.get((str(game["game_id"]), market), []),
+                kickoff,
+                policy,
+            )
+            close = select_canonical_close(
+                close_by_game_market.get((str(game["game_id"]), market), []),
                 kickoff,
                 policy,
             )
             evaluation_id = _stable_id(version, game["game_id"], market)
             result = "EXCLUDED"
-            exclusion_reason: str | None = "NO_VALID_CLOSE_PREDICTION"
+            exclusion_reason: str | None = "NO_VALID_DECISION_PREDICTION"
             eligible_non_push = 0
             model_brier: float | None = None
             market_brier: float | None = None
@@ -824,9 +980,9 @@ def settle_predictions(
             market_log_loss: float | None = None
             projection_error: float | None = None
             market_projection_error: float | None = None
-            if canonical is not None:
-                line = float(canonical["pinnacle_line"])
-                projection = float(canonical["final_projection"])
+            if decision is not None:
+                line = float(decision["pinnacle_line"])
+                projection = float(decision["final_projection"])
                 projection_error = actual - projection
                 market_projection_error = actual - line
                 if math.isclose(actual, line, abs_tol=1e-9):
@@ -837,14 +993,78 @@ def settle_predictions(
                     result = "WIN" if outcome else "LOSS"
                     exclusion_reason = None
                     eligible_non_push = 1
-                    model_probability = float(canonical["calibrated_non_push_win_probability"])
-                    market_probability = float(canonical["pinnacle_orientation_no_vig_probability"])
+                    model_probability = float(decision["calibrated_non_push_win_probability"])
+                    market_probability = float(decision["pinnacle_orientation_no_vig_probability"])
                     model_brier, model_log_loss = _binary_scores(model_probability, outcome)
                     market_brier, market_log_loss = _binary_scores(market_probability, outcome)
+
+            decision_snapshot_id = decision.get("snapshot_id") if decision else None
+            close_snapshot_id = close.get("snapshot_id") if close else None
+            reconciliation_status = "RECONCILED"
+            clv_status = "AVAILABLE"
+            if decision is None:
+                reconciliation_status = "MISSING_DECISION_SNAPSHOT"
+                clv_status = "UNAVAILABLE_MISSING_DECISION"
+            elif close is None:
+                reconciliation_status = "MISSING_CLOSE_SNAPSHOT"
+                clv_status = "UNAVAILABLE_MISSING_CLOSE"
+            elif decision_snapshot_id == close_snapshot_id:
+                reconciliation_status = "SNAPSHOT_NOT_INDEPENDENT"
+                clv_status = "UNAVAILABLE_NOT_INDEPENDENT"
+            elif decision["provider_event_id"] != close["provider_event_id"]:
+                reconciliation_status = "PROVIDER_EVENT_MISMATCH"
+                clv_status = "UNAVAILABLE_EVENT_MISMATCH"
+            elif _parse_utc(
+                close["snapshot_retrieved_at_utc"], "close snapshot time"
+            ) <= _parse_utc(decision["snapshot_retrieved_at_utc"], "decision snapshot time"):
+                reconciliation_status = "CLOSE_NOT_AFTER_DECISION"
+                clv_status = "UNAVAILABLE_TEMPORAL_ORDER"
+
+            decision_price_clv: float | None = None
+            probability_movement: float | None = None
+            decision_line_clv: float | None = None
+            closing_win: float | None = None
+            closing_push: float | None = None
+            closing_loss: float | None = None
+            closing_contract_ev: float | None = None
+            key_numbers: list[int] = []
+            key_movement = "UNAVAILABLE"
+            if clv_status == "AVAILABLE" and decision is not None and close is not None:
+                decision_line = float(decision["pinnacle_line"])
+                closing_line = float(close["pinnacle_line"])
+                decision_probability = float(
+                    decision["pinnacle_orientation_no_vig_probability"]
+                )
+                closing_probability = float(
+                    close["pinnacle_orientation_no_vig_probability"]
+                )
+                probability_movement = closing_probability - decision_probability
+                decision_line_clv = closing_line - decision_line
+                key_numbers, key_movement = _key_number_movement(
+                    market, decision_line, closing_line
+                )
+                if bundle is None:
+                    bundle = load_frozen_bundle(version, resolved, verify_git=False)
+                closing_win, closing_push, closing_loss = _closing_contract_distribution(
+                    bundle.candidate,
+                    market,
+                    closing_line,
+                    closing_probability,
+                    decision_line,
+                )
+                decision_decimal = american_to_decimal(
+                    int(decision["pinnacle_orientation_price"])
+                )
+                closing_decision_non_push = closing_win + closing_loss
+                decision_price_clv = (
+                    closing_win / closing_decision_non_push
+                    - implied_probability(int(decision["pinnacle_orientation_price"]))
+                )
+                closing_contract_ev = closing_win * (decision_decimal - 1.0) - closing_loss
             settled_text = iso_utc(now)
             record: dict[str, Any] = {
                 "evaluation_id": evaluation_id,
-                "prediction_id": canonical.get("prediction_id") if canonical else None,
+                "prediction_id": decision.get("prediction_id") if decision else None,
                 "model_version": version,
                 "game_id": game["game_id"],
                 "season": int(game["season"]),
@@ -854,33 +1074,43 @@ def settle_predictions(
                 "orientation": orientation,
                 "settled_at_utc": settled_text,
                 "selection_rule_version": str(policy["selection_rule_version"]),
-                "canonical_snapshot_id": canonical.get("snapshot_id") if canonical else None,
+                "canonical_snapshot_id": decision_snapshot_id,
                 "prediction_created_at_utc": (
-                    canonical.get("prediction_created_at_utc") if canonical else None
+                    decision.get("prediction_created_at_utc") if decision else None
                 ),
-                "feature_as_of_utc": canonical.get("feature_as_of_utc") if canonical else None,
-                "closing_line": canonical.get("pinnacle_line") if canonical else None,
+                "feature_as_of_utc": decision.get("feature_as_of_utc") if decision else None,
+                "decision_snapshot_id": decision_snapshot_id,
+                "closing_snapshot_id": close_snapshot_id,
+                "decision_line": decision.get("pinnacle_line") if decision else None,
+                "decision_orientation_price": (
+                    decision.get("pinnacle_orientation_price") if decision else None
+                ),
+                "decision_other_price": decision.get("pinnacle_other_price") if decision else None,
+                "decision_market_probability": (
+                    decision.get("pinnacle_orientation_no_vig_probability") if decision else None
+                ),
+                "closing_line": close.get("pinnacle_line") if close else None,
                 "closing_orientation_price": (
-                    canonical.get("pinnacle_orientation_price") if canonical else None
+                    close.get("pinnacle_orientation_price") if close else None
                 ),
                 "closing_other_price": (
-                    canonical.get("pinnacle_other_price") if canonical else None
+                    close.get("pinnacle_other_price") if close else None
                 ),
                 "closing_market_probability": (
-                    canonical.get("pinnacle_orientation_no_vig_probability") if canonical else None
+                    close.get("pinnacle_orientation_no_vig_probability") if close else None
                 ),
-                "final_projection": canonical.get("final_projection") if canonical else None,
+                "final_projection": decision.get("final_projection") if decision else None,
                 "model_non_push_win_probability": (
-                    canonical.get("calibrated_non_push_win_probability") if canonical else None
+                    decision.get("calibrated_non_push_win_probability") if decision else None
                 ),
                 "model_win_probability": (
-                    canonical.get("model_win_probability") if canonical else None
+                    decision.get("model_win_probability") if decision else None
                 ),
                 "model_push_probability": (
-                    canonical.get("model_push_probability") if canonical else None
+                    decision.get("model_push_probability") if decision else None
                 ),
                 "model_loss_probability": (
-                    canonical.get("model_loss_probability") if canonical else None
+                    decision.get("model_loss_probability") if decision else None
                 ),
                 "actual_value": actual,
                 "result": result,
@@ -892,7 +1122,22 @@ def settle_predictions(
                 "market_log_loss": market_log_loss,
                 "projection_error": projection_error,
                 "market_projection_error": market_projection_error,
-                "line_clv": 0.0 if canonical else None,
+                "market_probability_movement": probability_movement,
+                "decision_price_clv": decision_price_clv,
+                "decision_line_clv": decision_line_clv,
+                "line_clv": decision_line_clv,
+                "closing_contract_win_probability": closing_win,
+                "closing_contract_push_probability": closing_push,
+                "closing_contract_loss_probability": closing_loss,
+                "closing_contract_ev": closing_contract_ev,
+                "key_numbers_crossed_json": (
+                    json.dumps(key_numbers, separators=(",", ":"))
+                    if clv_status == "AVAILABLE"
+                    else None
+                ),
+                "key_number_movement": key_movement,
+                "clv_status": clv_status,
+                "reconciliation_status": reconciliation_status,
                 "source": "nflverse:results+the-odds-api:pinnacle",
                 "retrieved_at_utc": settled_text,
                 "source_updated_at_utc": game.get("source_updated_at_utc"),
@@ -963,7 +1208,7 @@ def _prospective_summary(frame: pl.DataFrame, policy: dict[str, Any]) -> dict[st
             else np.asarray([], dtype=float)
         )
         market_probability = (
-            eligible["closing_market_probability"].cast(pl.Float64).to_numpy()
+            eligible["decision_market_probability"].cast(pl.Float64).to_numpy()
             if eligible.height
             else np.asarray([], dtype=float)
         )
@@ -1022,6 +1267,15 @@ def _prospective_summary(frame: pl.DataFrame, policy: dict[str, Any]) -> dict[st
             else {}
         )
         line_clv_mean = market_rows["line_clv"].drop_nulls().mean() if market_rows.height else None
+        price_clv_mean = (
+            market_rows["decision_price_clv"].drop_nulls().mean() if market_rows.height else None
+        )
+        contract_ev_mean = (
+            market_rows["closing_contract_ev"].drop_nulls().mean() if market_rows.height else None
+        )
+        clv_available = (
+            int((market_rows["clv_status"] == "AVAILABLE").sum()) if market_rows.height else 0
+        )
         markets[market] = {
             "evaluated_games": market_rows.height,
             "canonical_contracts": int((market_rows["result"] != "EXCLUDED").sum())
@@ -1045,6 +1299,14 @@ def _prospective_summary(frame: pl.DataFrame, policy: dict[str, Any]) -> dict[st
             "mean_line_clv": (
                 float(cast(float, line_clv_mean)) if line_clv_mean is not None else None
             ),
+            "mean_price_clv": (
+                float(cast(float, price_clv_mean)) if price_clv_mean is not None else None
+            ),
+            "mean_closing_contract_ev": (
+                float(cast(float, contract_ev_mean)) if contract_ev_mean is not None else None
+            ),
+            "clv_available": clv_available,
+            "clv_unavailable": market_rows.height - clv_available,
         }
     ready = all(markets[market]["eligible_non_push"] >= minimum for market in markets)
     coverage = (

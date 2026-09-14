@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import threading
 from collections.abc import Callable
+from datetime import UTC, datetime
 
 import httpx
 import pytest
@@ -13,6 +14,9 @@ from nfl_bets.odds.client import (
     capture_reconciliation_status,
     reconcile_scheduled_capture,
     snapshot_odds,
+)
+from nfl_bets.odds.client import (
+    _week_bucket as current_week_bucket,
 )
 
 SLOT = "monday_1200"
@@ -76,14 +80,20 @@ def test_concurrent_scheduled_capture_makes_at_most_one_provider_call(
     assert len(errors) == 1
     assert isinstance(errors[0], DuplicateCaptureError)
     assert results[0]["provider_request_id_recorded"] is True
+    assert results[0]["snapshot_purpose"] == "DECISION"
     assert "provider_request_id" not in results[0]
     with connect(settings) as connection:
         reservation = connection.execute("SELECT * FROM capture_reservations").fetchone()
         attempts = connection.execute("SELECT COUNT(*) FROM api_requests").fetchone()[0]
+        snapshot_purpose = connection.execute(
+            "SELECT snapshot_purpose FROM raw_snapshots"
+        ).fetchone()[0]
     assert attempts == 1
     assert reservation["status"] == "COMPLETE"
     assert reservation["provider_call_count"] == 1
     assert reservation["reservation_conflicts"] == 1
+    assert reservation["request_kind"] == "full-board:decision"
+    assert snapshot_purpose == "DECISION"
 
 
 def test_ambiguous_timeout_blocks_retry_until_provider_confirms_not_billed(
@@ -244,3 +254,32 @@ def test_response_without_raw_persistence_is_never_automatically_retried(
     )
     assert closed["status"] == "CLOSED_NO_RETRY"
     assert closed["safe_to_call"] is False
+
+
+def test_legacy_slot_key_blocks_a_new_purpose_key_without_provider_contact(
+    tmp_path, monkeypatch
+) -> None:
+    settings = Settings.for_root(tmp_path)
+    initialize_database(settings)
+    monkeypatch.setenv("THE_ODDS_API_KEY", "fixture-key")
+    with connect(settings) as connection:
+        connection.execute(
+            "INSERT INTO api_requests(request_id,slot,request_kind,week_bucket,"
+            "started_at_utc,completed_at_utc,status) VALUES ('legacy',?,'full-board',?,"
+            "'2026-09-14T12:00:00Z','2026-09-14T12:00:01Z','COMPLETE')",
+            (SLOT, current_week_bucket(datetime.now(UTC), settings)),
+        )
+        connection.commit()
+    initialize_database(settings)
+    calls = 0
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal calls
+        calls += 1
+        return httpx.Response(200, json=[])
+
+    client = _client(handler)
+    with pytest.raises(DuplicateCaptureError, match="LEGACY_COMPLETE"):
+        snapshot_odds(SLOT, settings=settings, client=client)
+    client.close()
+    assert calls == 0

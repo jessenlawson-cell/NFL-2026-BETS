@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+import sqlite3
+
+import pytest
+
 from nfl_bets.config import Settings
 from nfl_bets.db import connect, initialize_database, table_columns
 from nfl_bets.schemas import ARTIFACT_SCHEMAS
@@ -40,3 +44,23 @@ def test_database_backfills_legacy_scheduled_capture_as_reserved_history(tmp_pat
     assert reservation["idempotency_key"] == expected
     assert reservation["status"] == "COMPLETE"
     assert reservation["provider_call_count"] == 1
+
+
+def test_snapshot_purpose_is_required_and_immutable(tmp_path) -> None:
+    settings = Settings.for_root(tmp_path)
+    initialize_database(settings)
+    with connect(settings) as connection:
+        connection.execute(
+            "INSERT INTO raw_snapshots("
+            "snapshot_id,provider,kind,snapshot_purpose,path,retrieved_at_utc,content_hash,"
+            "byte_count) VALUES ('decision','fixture','board','DECISION','fixture.json',"
+            "'2026-09-20T16:00:00Z','hash',1)"
+        )
+        connection.commit()
+        with pytest.raises(sqlite3.IntegrityError, match="immutable"):
+            connection.execute(
+                "UPDATE raw_snapshots SET snapshot_purpose='CLOSE' "
+                "WHERE snapshot_id='decision'"
+            )
+        with pytest.raises(sqlite3.IntegrityError, match="immutable"):
+            connection.execute("DELETE FROM raw_snapshots WHERE snapshot_id='decision'")

@@ -171,9 +171,16 @@ def odds_snapshot(
         str,
         typer.Option("--slot", help="Configured scheduled slot name, or 'manual'."),
     ],
+    purpose: Annotated[
+        str | None,
+        typer.Option(
+            "--purpose",
+            help="DECISION, CLOSE, or DIAGNOSTIC; scheduled slots enforce the registered purpose.",
+        ),
+    ] = None,
 ) -> None:
-    """Retrieve one consolidated spreads/totals board without automatic retries."""
-    _print_result(snapshot_odds(slot))
+    """Retrieve one immutable, purpose-labelled board without automatic retries."""
+    _print_result(snapshot_odds(slot, purpose=purpose))
 
 
 @pilot_app.command("capture")
@@ -181,7 +188,7 @@ def pilot_capture(
     slot: Annotated[str, typer.Option("--slot", help="One configured weekly slot name.")],
     version: Annotated[str, typer.Option("--version")] = "1.1.2",
 ) -> None:
-    """Manually capture one board and immediately add PASS-only predictions."""
+    """Capture the slot's registered DECISION or CLOSE board."""
     _print_result(capture_pilot_slot(slot=slot, version=version))
 
 

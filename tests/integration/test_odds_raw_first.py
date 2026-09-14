@@ -52,5 +52,7 @@ def test_raw_response_is_saved_before_flatline_parse_failure(tmp_path, monkeypat
     assert json.loads(body_files[0].read_text(encoding="utf-8")) == board
     with connect(settings) as connection:
         request = connection.execute("SELECT status,raw_snapshot_id FROM api_requests").fetchone()
+        purpose = connection.execute("SELECT snapshot_purpose FROM raw_snapshots").fetchone()[0]
     assert request["status"] == "PARSE_FAILED"
     assert request["raw_snapshot_id"] is not None
+    assert purpose == "DIAGNOSTIC"

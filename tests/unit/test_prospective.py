@@ -10,7 +10,10 @@ from nfl_bets.model.residuals import OutcomeProbabilities
 from nfl_bets.prospective import (
     ELIGIBLE_CLOSE_STATUS,
     _anchor_contract,
+    _closing_contract_distribution,
+    _key_number_movement,
     _score_contract,
+    select_canonical_close,
     select_canonical_prediction,
 )
 
@@ -25,6 +28,7 @@ def _policy() -> dict[str, object]:
 def _prediction(snapshot_time: str, prediction_id: str = "prediction") -> dict[str, object]:
     return {
         "prediction_id": prediction_id,
+        "snapshot_purpose": "DECISION",
         "eligibility_status": ELIGIBLE_CLOSE_STATUS,
         "snapshot_retrieved_at_utc": snapshot_time,
         "prediction_created_at_utc": snapshot_time,
@@ -57,6 +61,55 @@ def test_canonical_selection_enforces_window_and_quote_age() -> None:
     stale = _prediction("2026-09-20T16:00:00Z")
     stale["pinnacle_updated_at_utc"] = "2026-09-20T15:29:59Z"
     assert select_canonical_prediction([too_early, stale], kickoff, _policy()) is None
+
+
+def test_close_selection_uses_only_independent_close_market_rows() -> None:
+    kickoff = datetime(2026, 9, 20, 17, 0, tzinfo=UTC)
+
+    def rows(snapshot_id: str, purpose: str, retrieved: str) -> list[dict[str, object]]:
+        return [
+            {
+                "snapshot_id": snapshot_id,
+                "snapshot_purpose": purpose,
+                "provider_event_id": "event",
+                "game_id": "game",
+                "market": "spreads",
+                "bookmaker_key": "pinnacle",
+                "selection": selection,
+                "canonical_line": 3.5,
+                "american_price": -110,
+                "vig_free_probability": 0.5,
+                "overround": 1.0476,
+                "retrieved_at_utc": retrieved,
+                "source_updated_at_utc": retrieved,
+            }
+            for selection in ("HOME", "AWAY")
+        ]
+
+    decision_rows = rows("decision", "DECISION", "2026-09-20T16:00:00Z")
+    close_rows = rows("close", "CLOSE", "2026-09-20T16:45:00Z")
+    selected = select_canonical_close(decision_rows + close_rows, kickoff, _policy())
+    assert selected is not None
+    assert selected["snapshot_id"] == "close"
+
+
+def test_closing_contract_preserves_push_mass_and_key_crossings() -> None:
+    class Mapper:
+        def probabilities(
+            self, projection: float, line: float, stratum: float
+        ) -> OutcomeProbabilities:
+            if line == projection:
+                return OutcomeProbabilities(win=0.45, push=0.10, loss=0.45)
+            return OutcomeProbabilities(win=0.65, push=0.05, loss=0.30)
+
+    candidate = SimpleNamespace(spread_residuals=Mapper())
+    win, push, loss = _closing_contract_distribution(candidate, "spreads", 3.5, 0.55, 2.5)
+    assert push == pytest.approx(0.05)
+    assert win + push + loss == pytest.approx(1.0)
+    keys, label = _key_number_movement("spreads", 2.5, 3.5)
+    assert keys == [3]
+    assert label == "CROSSED_PRIMARY_KEY"
+    assert _key_number_movement("totals", 44.0, 45.0) == ([], "NOT_APPLICABLE")
 
 
 def test_anchor_contract_rejects_stale_or_different_points() -> None:

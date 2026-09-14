@@ -32,6 +32,8 @@ CREATE TABLE IF NOT EXISTS raw_snapshots (
     snapshot_id TEXT PRIMARY KEY,
     provider TEXT NOT NULL,
     kind TEXT NOT NULL,
+    snapshot_purpose TEXT NOT NULL
+        CHECK(snapshot_purpose IN ('DECISION','CLOSE','DIAGNOSTIC')),
     path TEXT NOT NULL,
     headers_path TEXT,
     retrieved_at_utc TEXT NOT NULL,
@@ -229,6 +231,9 @@ CREATE TABLE IF NOT EXISTS prospective_evaluations (
     kickoff_utc TEXT NOT NULL, market TEXT NOT NULL, orientation TEXT NOT NULL,
     settled_at_utc TEXT NOT NULL, selection_rule_version TEXT NOT NULL,
     canonical_snapshot_id TEXT, prediction_created_at_utc TEXT, feature_as_of_utc TEXT,
+    decision_snapshot_id TEXT, closing_snapshot_id TEXT,
+    decision_line REAL, decision_orientation_price INTEGER, decision_other_price INTEGER,
+    decision_market_probability REAL,
     closing_line REAL, closing_orientation_price INTEGER, closing_other_price INTEGER,
     closing_market_probability REAL, final_projection REAL,
     model_non_push_win_probability REAL, model_win_probability REAL,
@@ -236,7 +241,13 @@ CREATE TABLE IF NOT EXISTS prospective_evaluations (
     result TEXT NOT NULL, eligible_non_push INTEGER NOT NULL,
     exclusion_reason TEXT, model_brier REAL, market_brier REAL, model_log_loss REAL,
     market_log_loss REAL, projection_error REAL, market_projection_error REAL,
-    line_clv REAL, source TEXT NOT NULL, retrieved_at_utc TEXT NOT NULL,
+    market_probability_movement REAL, decision_price_clv REAL,
+    decision_line_clv REAL, line_clv REAL,
+    closing_contract_win_probability REAL, closing_contract_push_probability REAL,
+    closing_contract_loss_probability REAL, closing_contract_ev REAL,
+    key_numbers_crossed_json TEXT, key_number_movement TEXT,
+    clv_status TEXT NOT NULL, reconciliation_status TEXT NOT NULL,
+    source TEXT NOT NULL, retrieved_at_utc TEXT NOT NULL,
     source_updated_at_utc TEXT, schema_version TEXT NOT NULL, content_hash TEXT NOT NULL,
     FOREIGN KEY(prediction_id) REFERENCES model_predictions(prediction_id),
     FOREIGN KEY(game_id) REFERENCES games(game_id)
@@ -311,6 +322,26 @@ CAPTURE_REQUEST_COLUMNS = {
     "provider_response_received_at_utc": "TEXT",
     "provider_request_id": "TEXT",
     "reconciliation_status": "TEXT NOT NULL DEFAULT 'NOT_REQUIRED'",
+}
+
+EVALUATION_CLV_COLUMNS = {
+    "decision_snapshot_id": "TEXT",
+    "closing_snapshot_id": "TEXT",
+    "decision_line": "REAL",
+    "decision_orientation_price": "INTEGER",
+    "decision_other_price": "INTEGER",
+    "decision_market_probability": "REAL",
+    "market_probability_movement": "REAL",
+    "decision_price_clv": "REAL",
+    "decision_line_clv": "REAL",
+    "closing_contract_win_probability": "REAL",
+    "closing_contract_push_probability": "REAL",
+    "closing_contract_loss_probability": "REAL",
+    "closing_contract_ev": "REAL",
+    "key_numbers_crossed_json": "TEXT",
+    "key_number_movement": "TEXT",
+    "clv_status": "TEXT NOT NULL DEFAULT 'UNAVAILABLE_LEGACY'",
+    "reconciliation_status": "TEXT NOT NULL DEFAULT 'LEGACY_UNRECONCILED'",
 }
 
 
@@ -396,6 +427,51 @@ def _migrate_capture_idempotency(connection: sqlite3.Connection) -> None:
     )
 
 
+def _migrate_market_snapshot_clv(connection: sqlite3.Connection) -> None:
+    raw_columns = set(table_columns(connection, "raw_snapshots"))
+    if "snapshot_purpose" not in raw_columns:
+        connection.execute(
+            "ALTER TABLE raw_snapshots ADD COLUMN snapshot_purpose TEXT NOT NULL "
+            "DEFAULT 'DIAGNOSTIC' CHECK(snapshot_purpose IN "
+            "('DECISION','CLOSE','DIAGNOSTIC'))"
+        )
+    evaluation_columns = set(table_columns(connection, "prospective_evaluations"))
+    for name, declaration in EVALUATION_CLV_COLUMNS.items():
+        if name not in evaluation_columns:
+            connection.execute(
+                f"ALTER TABLE prospective_evaluations ADD COLUMN {name} {declaration}"
+            )
+    connection.executescript(
+        """
+        CREATE TRIGGER IF NOT EXISTS immutable_raw_snapshot_purpose
+        BEFORE UPDATE OF snapshot_purpose ON raw_snapshots
+        WHEN NEW.snapshot_purpose != OLD.snapshot_purpose
+        BEGIN
+            SELECT RAISE(ABORT, 'raw snapshot purpose is immutable');
+        END;
+        CREATE TRIGGER IF NOT EXISTS immutable_decision_close_snapshot_update
+        BEFORE UPDATE ON raw_snapshots
+        WHEN OLD.snapshot_purpose IN ('DECISION','CLOSE')
+        BEGIN
+            SELECT RAISE(ABORT, 'decision and close snapshots are immutable');
+        END;
+        CREATE TRIGGER IF NOT EXISTS immutable_decision_close_snapshot_delete
+        BEFORE DELETE ON raw_snapshots
+        WHEN OLD.snapshot_purpose IN ('DECISION','CLOSE')
+        BEGIN
+            SELECT RAISE(ABORT, 'decision and close snapshots are immutable');
+        END;
+        CREATE INDEX IF NOT EXISTS idx_raw_snapshots_purpose_time
+        ON raw_snapshots(snapshot_purpose, retrieved_at_utc);
+        """
+    )
+    connection.execute(
+        "INSERT OR IGNORE INTO schema_migrations(version, applied_at_utc) "
+        "VALUES ('observer-market-snapshots-clv-1.0.0', "
+        "strftime('%Y-%m-%dT%H:%M:%fZ','now'))"
+    )
+
+
 def initialize_database(settings: Settings | None = None) -> Path:
     resolved = settings or get_settings()
     with connect(resolved) as connection:
@@ -411,6 +487,7 @@ def initialize_database(settings: Settings | None = None) -> Path:
             "VALUES ('1.1.0', strftime('%Y-%m-%dT%H:%M:%fZ','now'))"
         )
         _migrate_capture_idempotency(connection)
+        _migrate_market_snapshot_clv(connection)
         connection.commit()
     return resolved.db_path
 

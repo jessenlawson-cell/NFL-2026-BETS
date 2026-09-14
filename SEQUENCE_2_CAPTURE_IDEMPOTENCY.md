@@ -4,12 +4,13 @@
 
 Configured scheduled captures now use one stable key:
 
-`scheduled-capture:v1:<Tuesday week bucket>:<slot>:full-board`
+`scheduled-capture:v1:<Tuesday week bucket>:<slot>:full-board:<purpose>`
 
 SQLite enforces uniqueness on the underlying (`week_bucket`, `slot`, `request_kind`) tuple.
 The reservation is committed with `BEGIN IMMEDIATE` before client construction or provider
 contact. A second process records a reservation conflict and exits without calling the provider.
-Manual captures remain outside the scheduled-pilot keyspace.
+The purpose is the slot's registered lowercase `decision` or `close` role. Manual captures remain
+outside the scheduled-pilot keyspace.
 
 Migration backfills any legacy scheduled request into a reservation before new captures are
 allowed. Existing raw-snapshot or HTTP-response evidence conservatively establishes the legacy
@@ -67,7 +68,7 @@ keys, active attempts, provider-call counts, and retry authorization states.
 
 V1.1.2 remains `LOCKED_UNTESTED_2026`, observer-only, and PASS-only. This change does not alter its
 artifact, specification, features, calibration, probability mapping, prospective cutoff, or test
-population. Sequence item 3 has not started.
+population. Sequence item 3 is documented separately in `SEQUENCE_3_MARKET_SNAPSHOTS_CLV.md`.
 
 ## Acceptance record
 

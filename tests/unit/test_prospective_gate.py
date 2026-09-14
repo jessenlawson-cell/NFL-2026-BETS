@@ -88,10 +88,15 @@ def test_formal_test_is_consumed_exactly_once_after_minimum_sample(tmp_path, mon
                     "eligible_non_push": 1,
                     "result": "WIN" if win else "LOSS",
                     "model_non_push_win_probability": model_probability,
-                    "closing_market_probability": market_probability,
+                    "decision_market_probability": market_probability,
+                    "market_probability_movement": None,
                     "final_projection": 1.0,
                     "projection_error": 0.0,
-                    "line_clv": 0.0,
+                    "decision_price_clv": None,
+                    "decision_line_clv": None,
+                    "line_clv": None,
+                    "closing_contract_ev": None,
+                    "clv_status": "UNAVAILABLE_MISSING_CLOSE",
                     "exclusion_reason": None,
                 }
             )

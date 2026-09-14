@@ -100,6 +100,15 @@ FLOAT_COLUMNS = {
     "model_push_probability",
     "model_loss_probability",
     "closing_market_probability",
+    "decision_line",
+    "decision_market_probability",
+    "market_probability_movement",
+    "decision_price_clv",
+    "decision_line_clv",
+    "closing_contract_win_probability",
+    "closing_contract_push_probability",
+    "closing_contract_loss_probability",
+    "closing_contract_ev",
     "model_non_push_win_probability",
     "actual_value",
     "model_brier",
@@ -366,6 +375,17 @@ def _validate_prospective(
     if predictions.height:
         if predictions.filter(pl.col("decision") != "PASS").height:
             raise DataQualityError("Prospective ledger contains a non-PASS decision")
+        with connect(settings) as connection:
+            non_decision_predictions = int(
+                connection.execute(
+                    "SELECT COUNT(*) FROM model_predictions p JOIN raw_snapshots r "
+                    "ON r.snapshot_id=p.snapshot_id WHERE p.model_version=? "
+                    "AND r.snapshot_purpose!='DECISION'",
+                    (str(policy["model_version"]),),
+                ).fetchone()[0]
+            )
+        if non_decision_predictions:
+            raise DataQualityError("A prediction references a non-DECISION snapshot")
         probability_rows = predictions.drop_nulls(
             [
                 "model_win_probability",
@@ -454,6 +474,69 @@ def _validate_prospective(
             )
             if unmatched.height:
                 raise DataQualityError("Evaluation references an unknown prediction")
+        clv_fields = [
+            "market_probability_movement",
+            "decision_price_clv",
+            "decision_line_clv",
+            "line_clv",
+            "closing_contract_win_probability",
+            "closing_contract_push_probability",
+            "closing_contract_loss_probability",
+            "closing_contract_ev",
+            "key_numbers_crossed_json",
+            "key_number_movement",
+        ]
+        available = evaluations.filter(pl.col("clv_status") == "AVAILABLE")
+        if available.height:
+            required = [
+                "decision_snapshot_id",
+                "closing_snapshot_id",
+                "decision_line",
+                "closing_line",
+                "decision_orientation_price",
+                "closing_orientation_price",
+                "decision_market_probability",
+                "closing_market_probability",
+                *clv_fields,
+            ]
+            if any(available[column].null_count() for column in required):
+                raise DataQualityError("Available CLV row is missing a required contract field")
+            if available.filter(
+                pl.col("decision_snapshot_id") == pl.col("closing_snapshot_id")
+            ).height:
+                raise DataQualityError("Decision and close snapshots are not independent")
+            if available.filter(
+                (
+                    pl.col("closing_contract_win_probability")
+                    + pl.col("closing_contract_push_probability")
+                    + pl.col("closing_contract_loss_probability")
+                    - 1.0
+                ).abs()
+                > 1e-9
+            ).height:
+                raise DataQualityError("Closing contract probabilities do not sum to one")
+            if available.filter(
+                (pl.col("decision_line_clv") - pl.col("line_clv")).abs() > 1e-12
+            ).height:
+                raise DataQualityError("Line CLV aliases do not reconcile")
+        unavailable = evaluations.filter(pl.col("clv_status") != "AVAILABLE")
+        numeric_clv_fields = [column for column in clv_fields if column != "key_number_movement"]
+        if unavailable.height and any(
+            unavailable[column].drop_nulls().len() for column in numeric_clv_fields
+        ):
+            raise DataQualityError("Unavailable CLV row contains a synthetic value")
+        with connect(settings) as connection:
+            invalid_purposes = int(
+                connection.execute(
+                    "SELECT COUNT(*) FROM prospective_evaluations e "
+                    "LEFT JOIN raw_snapshots d ON d.snapshot_id=e.decision_snapshot_id "
+                    "LEFT JOIN raw_snapshots c ON c.snapshot_id=e.closing_snapshot_id "
+                    "WHERE e.clv_status='AVAILABLE' AND "
+                    "(d.snapshot_purpose!='DECISION' OR c.snapshot_purpose!='CLOSE')"
+                ).fetchone()[0]
+            )
+        if invalid_purposes:
+            raise DataQualityError("CLV row references an invalid snapshot purpose")
     return {
         "status": "VALID",
         "model_version": policy["model_version"],
@@ -563,7 +646,7 @@ def validate_all(settings: Settings | None = None) -> dict[str, Any]:
                 raise DataQualityError(
                     f"{name}.csv columns do not match schema version {resolved.schema_version}"
                 )
-            if table_columns(connection, name) != schema.columns:
+            if set(table_columns(connection, name)) != set(schema.columns):
                 raise DataQualityError(f"SQLite table {name} does not match its CSV contract")
             duplicates = frame.group_by(schema.primary_key).len().filter(pl.col("len") > 1)
             if not duplicates.is_empty():

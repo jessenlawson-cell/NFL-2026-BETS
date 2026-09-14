@@ -32,7 +32,9 @@ differential.
 Append-only primary key: (`snapshot_id`, `provider_event_id`, `bookmaker_key`, `market`,
 `selection`). Stores the provider event, nflverse game match, bookmaker group, offered point,
 canonical line, American/decimal price, implied and no-vig probability, overround, quote update time,
-and retrieval metadata. Spread probability orientation is HOME; total orientation is OVER.
+and retrieval metadata. Its parent `raw_snapshots` row assigns the immutable purpose `DECISION`,
+`CLOSE`, or `DIAGNOSTIC`; purpose is never inferred from a prediction. Spread probability
+orientation is HOME; total orientation is OVER.
 
 ## `injuries.csv`
 
@@ -73,10 +75,18 @@ decision. A prediction is never created at or after kickoff and is never updated
 ## `prospective_evaluations.csv`
 
 Append-only primary key: `evaluation_id`, deterministically derived from model version, game, and
-market. Settlement first chooses the latest valid Pinnacle prediction captured 90–5 minutes before
-kickoff with a quote no older than 30 minutes, then joins the outcome. Rows preserve exclusions and
-pushes; pushes never enter Brier or log-loss comparisons. The canonical close row includes model
-and market scores, projection errors, and line CLV.
+market. Settlement independently chooses the latest valid prediction backed by a `DECISION`
+snapshot and the latest valid Pinnacle contract backed by a later `CLOSE` snapshot. Both must be
+captured 90–5 minutes before kickoff with quotes no older than 30 minutes. Rows preserve exclusions
+and pushes; pushes never enter Brier or log-loss comparisons. The observer stores separate snapshot
+IDs, lines, two-sided prices, no-vig probabilities, raw probability movement, exact-contract price
+CLV, line movement, signed key numbers, and closing-contract win/push/loss probabilities.
+Closing-contract EV is
+`P_close(win) * decision_net_decimal_payout - P_close(loss)`.
+
+Every CLV field is null unless the distinct snapshots reconcile by game, provider event, market,
+orientation, Pinnacle contract, freshness, and time ordering. The legacy `line_clv` column is a
+compatibility alias of real `decision_line_clv`; it is never filled with a synthetic zero.
 
 ## V1.1 runtime feature store
 
@@ -106,3 +116,8 @@ identifier, raw snapshot identity, and reconciliation status. `capture_reconcili
 append-only operator/provider evidence ledger. A retry is possible only after an operator records
 either that no call started or that the provider confirmed the ambiguous attempt was not billed.
 Responses and confirmed billed attempts are never retried.
+
+`raw_snapshots.snapshot_purpose` is required and protected by an immutability trigger. Legacy
+snapshots migrate to `DIAGNOSTIC`, so they cannot silently become decision or closing evidence.
+The 16-call weekly pilot schedule pre-registers each slot as DECISION or CLOSE; CLOSE slots never
+invoke the prediction path.

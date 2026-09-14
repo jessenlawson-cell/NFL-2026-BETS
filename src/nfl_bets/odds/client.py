@@ -34,6 +34,25 @@ SCHEDULED_SLOTS = {
     "monday_1200",
     "monday_1945",
 }
+SNAPSHOT_PURPOSES = {"DECISION", "CLOSE", "DIAGNOSTIC"}
+SCHEDULED_SLOT_PURPOSES = {
+    "sunday_open_2000": "DECISION",
+    "sunday_open_2330": "DECISION",
+    "wednesday_0900": "DECISION",
+    "wednesday_1700": "DECISION",
+    "thursday_1200": "DECISION",
+    "thursday_1930": "CLOSE",
+    "friday_1700": "DECISION",
+    "saturday_0900": "DECISION",
+    "saturday_1700": "DECISION",
+    "saturday_2300": "DECISION",
+    "sunday_0845": "DECISION",
+    "sunday_1245": "CLOSE",
+    "sunday_1545": "CLOSE",
+    "sunday_1945": "CLOSE",
+    "monday_1200": "DECISION",
+    "monday_1945": "CLOSE",
+}
 REQUEST_CREDIT_COST = 2
 REQUEST_KIND = "full-board"
 RECONCILIATION_RESOLUTIONS = {
@@ -80,10 +99,27 @@ def _week_bucket(now: datetime, settings: Settings) -> str:
     return start.isoformat()
 
 
-def scheduled_capture_key(week_bucket: str, slot: str, request_kind: str = REQUEST_KIND) -> str:
+def _snapshot_purpose(slot: str, purpose: str | None) -> str:
+    normalized = (purpose or SCHEDULED_SLOT_PURPOSES.get(slot, "DIAGNOSTIC")).strip().upper()
+    if normalized not in SNAPSHOT_PURPOSES:
+        raise ValueError(f"Snapshot purpose must be one of: {', '.join(sorted(SNAPSHOT_PURPOSES))}")
+    configured = SCHEDULED_SLOT_PURPOSES.get(slot)
+    if configured is not None and normalized != configured:
+        raise ValueError(f"Scheduled slot {slot} is registered as {configured}, not {normalized}")
+    return normalized
+
+
+def _request_kind(purpose: str) -> str:
+    return f"{REQUEST_KIND}:{purpose.lower()}"
+
+
+def scheduled_capture_key(
+    week_bucket: str, slot: str, request_kind: str | None = None
+) -> str:
     if slot not in SCHEDULED_SLOTS:
         raise ValueError(f"Stable capture keys require a configured slot, not {slot!r}")
-    return f"scheduled-capture:v1:{week_bucket}:{slot}:{request_kind}"
+    resolved_kind = request_kind or _request_kind(SCHEDULED_SLOT_PURPOSES[slot])
+    return f"scheduled-capture:v1:{week_bucket}:{slot}:{resolved_kind}"
 
 
 def _apply_quota_guard(connection: Any, week: str, settings: Settings, scheduled: bool) -> None:
@@ -114,10 +150,13 @@ def _apply_quota_guard(connection: Any, week: str, settings: Settings, scheduled
         raise QuotaError("Scheduled request reserve exhausted; four calls remain manual-only")
 
 
-def _reserve_request(slot: str, settings: Settings, now: datetime) -> RequestReservation:
+def _reserve_request(
+    slot: str, purpose: str, settings: Settings, now: datetime
+) -> RequestReservation:
     week = _week_bucket(now, settings)
     scheduled = slot in SCHEDULED_SLOTS
-    key = scheduled_capture_key(week, slot) if scheduled else None
+    request_kind = _request_kind(purpose)
+    key = scheduled_capture_key(week, slot, request_kind) if scheduled else None
     normalized_slot = slot if scheduled else "manual"
     duplicate_status: str | None = None
     reservation: RequestReservation | None = None
@@ -126,14 +165,20 @@ def _reserve_request(slot: str, settings: Settings, now: datetime) -> RequestRes
         existing = None
         if key is not None:
             existing = connection.execute(
-                "SELECT * FROM capture_reservations WHERE idempotency_key=?", (key,)
+                "SELECT * FROM capture_reservations WHERE idempotency_key=? OR "
+                "(week_bucket=? AND slot=? AND request_kind=?) "
+                "ORDER BY (idempotency_key=?) DESC LIMIT 1",
+                (key, week, slot, REQUEST_KIND, key),
             ).fetchone()
-            if existing is not None and existing["status"] != "RETRY_AUTHORIZED":
-                duplicate_status = str(existing["status"])
+            legacy_key = existing is not None and existing["idempotency_key"] != key
+            if existing is not None and (legacy_key or existing["status"] != "RETRY_AUTHORIZED"):
+                duplicate_status = (
+                    f"LEGACY_{existing['status']}" if legacy_key else str(existing["status"])
+                )
                 connection.execute(
                     "UPDATE capture_reservations SET updated_at_utc=?,"
                     "reservation_conflicts=reservation_conflicts+1 WHERE idempotency_key=?",
-                    (iso_utc(now), key),
+                    (iso_utc(now), existing["idempotency_key"]),
                 )
             elif existing is not None:
                 attempt_number = int(
@@ -158,7 +203,7 @@ def _reserve_request(slot: str, settings: Settings, now: datetime) -> RequestRes
                     key,
                     attempt_number,
                     normalized_slot,
-                    REQUEST_KIND,
+                    request_kind,
                     week,
                     iso_utc(now),
                 ),
@@ -170,7 +215,7 @@ def _reserve_request(slot: str, settings: Settings, now: datetime) -> RequestRes
                         "idempotency_key,week_bucket,slot,request_kind,created_at_utc,"
                         "updated_at_utc,status,active_request_id) "
                         "VALUES (?,?,?,?,?,?,'RESERVED',?)",
-                        (key, week, slot, REQUEST_KIND, iso_utc(now), iso_utc(now), request_id),
+                        (key, week, slot, request_kind, iso_utc(now), iso_utc(now), request_id),
                     )
                 else:
                     connection.execute(
@@ -419,8 +464,10 @@ def capture_reconciliation_status(
             "a.provider_call_started_at_utc,a.provider_response_received_at_utc,"
             "a.provider_request_id,a.raw_snapshot_id "
             "FROM capture_reservations r LEFT JOIN api_requests a "
-            "ON a.request_id=r.active_request_id WHERE r.idempotency_key=?",
-            (key,),
+            "ON a.request_id=r.active_request_id WHERE r.idempotency_key=? OR "
+            "(r.week_bucket=? AND r.slot=? AND r.request_kind=?) "
+            "ORDER BY (r.idempotency_key=?) DESC LIMIT 1",
+            (key, week_bucket, slot, REQUEST_KIND, key),
         ).fetchone()
     if row is None:
         return {
@@ -431,15 +478,16 @@ def capture_reconciliation_status(
             "safe_to_call": True,
         }
     result = dict(row)
+    result["legacy_key"] = result["idempotency_key"] != key
     result["provider_request_id_recorded"] = bool(result.pop("provider_request_id", None))
     with connect(resolved) as connection:
         result["reconciliation_events"] = int(
             connection.execute(
                 "SELECT COUNT(*) FROM capture_reconciliations WHERE idempotency_key=?",
-                (key,),
+                (result["idempotency_key"],),
             ).fetchone()[0]
         )
-    result["safe_to_call"] = result["status"] == "RETRY_AUTHORIZED"
+    result["safe_to_call"] = result["status"] == "RETRY_AUTHORIZED" and not result["legacy_key"]
     result["automatic_retry"] = False
     return result
 
@@ -465,13 +513,15 @@ def reconcile_scheduled_capture(
     reconciled_at = iso_utc()
     with immediate_transaction(resolved) as connection:
         row = connection.execute(
-            "SELECT r.status AS reservation_status,"
+            "SELECT r.idempotency_key,r.status AS reservation_status,"
             "r.reconciliation_status AS current_reconciliation_status,r.active_request_id,"
             "a.status AS attempt_status,a.provider_call_started_at_utc,"
             "a.provider_response_received_at_utc,a.raw_snapshot_id "
             "FROM capture_reservations r JOIN api_requests a "
-            "ON a.request_id=r.active_request_id WHERE r.idempotency_key=?",
-            (key,),
+            "ON a.request_id=r.active_request_id WHERE r.idempotency_key=? OR "
+            "(r.week_bucket=? AND r.slot=? AND r.request_kind=?) "
+            "ORDER BY (r.idempotency_key=?) DESC LIMIT 1",
+            (key, week_bucket, slot, REQUEST_KIND, key),
         ).fetchone()
         if row is None:
             raise ValueError("No scheduled capture reservation exists for this key")
@@ -514,7 +564,7 @@ def reconcile_scheduled_capture(
             "VALUES (?,?,?,?,?,?,'operator')",
             (
                 str(uuid.uuid4()),
-                key,
+                row["idempotency_key"],
                 row["active_request_id"],
                 reconciled_at,
                 normalized,
@@ -530,7 +580,14 @@ def reconcile_scheduled_capture(
             "UPDATE capture_reservations SET updated_at_utc=?,status=?,"
             "reconciliation_status=?,reconciled_at_utc=?,reconciliation_note=? "
             "WHERE idempotency_key=?",
-            (reconciled_at, reservation_status, normalized, reconciled_at, note.strip(), key),
+            (
+                reconciled_at,
+                reservation_status,
+                normalized,
+                reconciled_at,
+                note.strip(),
+                row["idempotency_key"],
+            ),
         )
     return capture_reconciliation_status(slot, week_bucket, resolved)
 
@@ -539,6 +596,8 @@ def snapshot_odds(
     slot: str,
     settings: Settings | None = None,
     client: httpx.Client | None = None,
+    *,
+    purpose: str | None = None,
 ) -> dict[str, Any]:
     resolved = settings or get_settings()
     initialize_database(resolved)
@@ -547,8 +606,9 @@ def snapshot_odds(
     api_key = api_key or os.environ.get("THE_ODDS_API_KEY")
     if not api_key:
         raise RuntimeError("THE_ODDS_API_KEY is not set")
+    snapshot_purpose = _snapshot_purpose(slot, purpose)
     now = datetime.now(UTC)
-    reservation = _reserve_request(slot, resolved, now)
+    reservation = _reserve_request(slot, snapshot_purpose, resolved, now)
     params = {
         "apiKey": api_key,
         "bookmakers": ",".join(("pinnacle", *RETAIL_BOOKS)),
@@ -595,12 +655,13 @@ def snapshot_odds(
     with immediate_transaction(resolved) as connection:
         connection.execute(
             "INSERT INTO raw_snapshots("
-            "snapshot_id,provider,kind,path,headers_path,retrieved_at_utc,content_hash,byte_count) "
-            "VALUES (?,?,?,?,?,?,?,?)",
+            "snapshot_id,provider,kind,snapshot_purpose,path,headers_path,retrieved_at_utc,"
+            "content_hash,byte_count) VALUES (?,?,?,?,?,?,?,?,?)",
             (
                 snapshot_id,
                 "the-odds-api",
                 "full-board",
+                snapshot_purpose,
                 str(raw_path),
                 str(headers_path),
                 retrieved_at,
@@ -689,6 +750,7 @@ def snapshot_odds(
     return {
         "request_id": reservation.request_id,
         "snapshot_id": snapshot_id,
+        "snapshot_purpose": snapshot_purpose,
         "week_bucket": reservation.week_bucket,
         "idempotency_key": reservation.idempotency_key,
         "attempt_number": reservation.attempt_number,

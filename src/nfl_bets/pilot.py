@@ -9,7 +9,9 @@ from typing import Any
 from nfl_bets.config import Settings, get_settings
 from nfl_bets.db import connect, initialize_database
 from nfl_bets.odds.client import (
+    SCHEDULED_SLOT_PURPOSES,
     SCHEDULED_SLOTS,
+    _request_kind,
     _week_bucket,
     capture_reconciliation_status,
     reconcile_scheduled_capture,
@@ -109,8 +111,12 @@ def preflight_pilot(
     try:
         schedule = tomllib.loads(schedule_path.read_text(encoding="utf-8"))
         configured_slots = set(schedule.get("slots", {}))
+        configured_purposes = {
+            str(key): str(value).upper() for key, value in schedule.get("purposes", {}).items()
+        }
         schedule_ok = (
             configured_slots == SCHEDULED_SLOTS
+            and configured_purposes == SCHEDULED_SLOT_PURPOSES
             and schedule.get("timezone") == resolved.timezone
             and schedule.get("weekly_call_limit") == resolved.weekly_call_limit
             and schedule.get("manual_reserve") == resolved.manual_call_reserve
@@ -189,10 +195,11 @@ def preflight_pilot(
                 provider_blocking = True
                 provider_detail = f"Last recorded provider balance: {provider_remaining} credits."
             if slot_ok and slot is not None:
+                request_kind = _request_kind(SCHEDULED_SLOT_PURPOSES[slot])
                 reservation = connection.execute(
                     "SELECT status,reconciliation_status FROM capture_reservations "
-                    "WHERE week_bucket=? AND slot=? AND request_kind='full-board'",
-                    (bucket, slot),
+                    "WHERE week_bucket=? AND slot=? AND request_kind=?",
+                    (bucket, slot, request_kind),
                 ).fetchone()
                 if reservation is None:
                     legacy = connection.execute(
@@ -259,14 +266,20 @@ def capture_pilot_slot(
     version: str = DEFAULT_MODEL_VERSION,
     settings: Settings | None = None,
 ) -> dict[str, Any]:
-    """Perform one user-initiated capture and immediately persist PASS-only predictions."""
+    """Capture a registered snapshot; only DECISION snapshots create PASS predictions."""
     if slot not in SCHEDULED_SLOTS:
         raise ValueError(f"Pilot slot must be one of: {', '.join(sorted(SCHEDULED_SLOTS))}")
     resolved = settings or get_settings()
-    odds = snapshot_odds(slot, settings=resolved)
-    prediction = predict_snapshot(str(odds["snapshot_id"]), version=version, settings=resolved)
+    purpose = SCHEDULED_SLOT_PURPOSES[slot]
+    odds = snapshot_odds(slot, settings=resolved, purpose=purpose)
+    prediction = (
+        predict_snapshot(str(odds["snapshot_id"]), version=version, settings=resolved)
+        if purpose == "DECISION"
+        else None
+    )
     return {
         "slot": slot,
+        "snapshot_purpose": purpose,
         "odds": odds,
         "prediction": prediction,
         "decision": "PASS",
@@ -321,10 +334,12 @@ def pilot_status(
             ).fetchone()[0]
         )
         for slot in sorted(SCHEDULED_SLOTS):
+            purpose = SCHEDULED_SLOT_PURPOSES[slot]
+            request_kind = _request_kind(purpose)
             request = connection.execute(
                 "SELECT * FROM api_requests WHERE week_bucket=? AND slot=? AND status='COMPLETE' "
-                "ORDER BY completed_at_utc DESC LIMIT 1",
-                (bucket, slot),
+                "AND request_kind=? ORDER BY completed_at_utc DESC LIMIT 1",
+                (bucket, slot, request_kind),
             ).fetchone()
             if request is None:
                 slots[slot] = {"status": "MISSING"}
@@ -354,12 +369,20 @@ def pilot_status(
                 ).fetchone()[0]
             )
             raw_intact = snapshot is not None and _snapshot_is_intact(dict(snapshot))
-            passed = raw_intact and quote_count > 0 and prediction_count > 0 and non_pass == 0
+            purpose_matches = snapshot is not None and snapshot["snapshot_purpose"] == purpose
+            prediction_state_ok = (
+                prediction_count > 0 and non_pass == 0
+                if purpose == "DECISION"
+                else prediction_count == 0
+            )
+            passed = raw_intact and purpose_matches and quote_count > 0 and prediction_state_ok
             slots[slot] = {
                 "status": "PASSED" if passed else "FAILED",
+                "snapshot_purpose": purpose,
                 "request_id": request["request_id"],
                 "snapshot_id": request["raw_snapshot_id"],
                 "raw_intact": raw_intact,
+                "purpose_matches": purpose_matches,
                 "quotes": quote_count,
                 "predictions": prediction_count,
                 "non_pass_decisions": non_pass,

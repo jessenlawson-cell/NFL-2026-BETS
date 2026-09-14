@@ -119,11 +119,14 @@ def test_snapshot_prediction_is_pass_only_and_idempotent(tmp_path) -> None:
             tuple(game[column] for column in columns),
         )
         connection.execute(
-            "INSERT INTO raw_snapshots VALUES (?,?,?,?,?,?,?,?)",
+            "INSERT INTO raw_snapshots("
+            "snapshot_id,provider,kind,snapshot_purpose,path,headers_path,retrieved_at_utc,"
+            "content_hash,byte_count) VALUES (?,?,?,?,?,?,?,?,?)",
             (
                 "snapshot",
                 "the-odds-api",
                 "full-board",
+                "DECISION",
                 "fixture.json",
                 "fixture.headers.json",
                 "2026-09-20T16:00:00Z",
@@ -208,3 +211,24 @@ def test_snapshot_prediction_is_pass_only_and_idempotent(tmp_path) -> None:
         assert row["model_win_probability"] + row["model_push_probability"] + row[
             "model_loss_probability"
         ] == pytest.approx(1.0)
+
+    with transaction(settings) as connection:
+        connection.execute(
+            "INSERT INTO raw_snapshots("
+            "snapshot_id,provider,kind,snapshot_purpose,path,retrieved_at_utc,content_hash,"
+            "byte_count) VALUES ('close','fixture','full-board','CLOSE','close.json',"
+            "'2026-09-20T16:45:00Z','close-hash',1)"
+        )
+        connection.execute(
+            "INSERT INTO api_requests(request_id,slot,request_kind,week_bucket,started_at_utc,"
+            "completed_at_utc,status,raw_snapshot_id) VALUES ('close-request','manual',"
+            "'full-board:close','2026-09-15','2026-09-20T16:45:00Z',"
+            "'2026-09-20T16:45:01Z','COMPLETE','close')"
+        )
+    with pytest.raises(RuntimeError, match="DECISION snapshot"):
+        predict_snapshot(
+            "close",
+            settings=settings,
+            prediction_time=datetime(2026, 9, 20, 16, 46, tzinfo=UTC),
+            verify_git=False,
+        )

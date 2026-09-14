@@ -59,7 +59,7 @@ nfl-bets model train --version 1.0.1
 nfl-bets model test --version 1.0.1 --season 2025
 nfl-bets v11 features build --as-of 2026-09-13T19:20:14.760705Z
 nfl-bets v11 model train --version 1.1.2
-nfl-bets odds snapshot --slot manual
+nfl-bets odds snapshot --slot manual --purpose DIAGNOSTIC
 nfl-bets v11 predict --snapshot-id <snapshot-id>
 nfl-bets settle --through 2026-09-21T12:00:00-04:00
 nfl-bets v11 checkpoint --through-week 8
@@ -75,6 +75,12 @@ Configured scheduled slots are protected by a stable weekly idempotency key. The
 commits a unique SQLite reservation before any provider call and records the call-start boundary,
 response receipt, sanitized provider request identifier, and terminal state. Duplicate or
 concurrent launches fail before contacting the provider.
+
+Every raw board is immutably labelled `DECISION`, `CLOSE`, or `DIAGNOSTIC`. The registered weekly
+pilot partitions its existing 16 calls between decision and near-kickoff close slots. Only
+DECISION snapshots may create V1.1.2 predictions. Settlement selects the CLOSE directly from market
+history, reports CLV as unavailable if either side is missing, and keeps price movement, line
+movement, key-number effects, and push-aware closing-contract EV separate.
 
 Data synchronization downloads nflverse one season at a time, validates a run in `data/staging/`,
 and promotes only complete authoritative exports. `features build` stores explicit lag-1 through
