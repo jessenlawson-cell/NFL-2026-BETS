@@ -7,10 +7,13 @@ from typing import Annotated
 import typer
 from rich.console import Console
 
+from nfl_bets.challenger import compare_challenger, predict_challenger_snapshot
 from nfl_bets.data.sync import sync_data
 from nfl_bets.db import initialize_database
 from nfl_bets.features.build import build_features
+from nfl_bets.features.challenger import build_challenger_features
 from nfl_bets.features.v11 import build_v11_features
+from nfl_bets.model.challenger import train_challenger_model
 from nfl_bets.model.training import test_model, train_model
 from nfl_bets.model.v11 import train_v11_model
 from nfl_bets.odds.client import snapshot_odds
@@ -42,6 +45,13 @@ v11_app = typer.Typer(help="Develop the post-V1 prospective model.", no_args_is_
 v11_features_app = typer.Typer(help="Build V1.1 feature inputs.", no_args_is_help=True)
 v11_model_app = typer.Typer(help="Freeze V1.1 candidates.", no_args_is_help=True)
 pilot_app = typer.Typer(help="Run and verify the manual odds-capture pilot.", no_args_is_help=True)
+challenger_app = typer.Typer(
+    help="Build and run the frozen Week 3-8 no-stakes shadow challenger.",
+    no_args_is_help=True,
+)
+challenger_features_app = typer.Typer(
+    help="Build leakage-safe challenger feature inputs.", no_args_is_help=True
+)
 app.add_typer(data_app, name="data")
 app.add_typer(features_app, name="features")
 app.add_typer(model_app, name="model")
@@ -49,8 +59,10 @@ app.add_typer(odds_app, name="odds")
 app.add_typer(db_app, name="db")
 app.add_typer(v11_app, name="v11")
 app.add_typer(pilot_app, name="pilot")
+app.add_typer(challenger_app, name="challenger")
 v11_app.add_typer(v11_features_app, name="features")
 v11_app.add_typer(v11_model_app, name="model")
+challenger_app.add_typer(challenger_features_app, name="features")
 console = Console()
 
 
@@ -127,6 +139,64 @@ def v11_model_train(
 ) -> None:
     """Develop through 2025 and freeze a candidate for post-freeze 2026 evaluation."""
     _print_result(train_v11_model(version))
+
+
+@challenger_features_app.command("build")
+def challenger_features_build(
+    as_of: Annotated[
+        str,
+        typer.Option("--as-of", help="Exact timezone-aware synchronization cutoff."),
+    ],
+    through_week: Annotated[int, typer.Option("--through-week")] = 2,
+) -> None:
+    """Build the expanded play-level challenger feature store."""
+    parsed_as_of = datetime.fromisoformat(as_of.replace("Z", "+00:00"))
+    _print_result(build_challenger_features(parsed_as_of, through_week=through_week))
+
+
+@challenger_app.command("train")
+def challenger_train(
+    version: Annotated[str, typer.Option("--version")] = "challenger-0.1.0",
+    through_week: Annotated[int, typer.Option("--through-week")] = 2,
+) -> None:
+    """Select, fit, and freeze the no-stakes Week 3-8 challenger."""
+    _print_result(train_challenger_model(version, through_week=through_week))
+
+
+@challenger_app.command("predict")
+def challenger_predict(
+    snapshot_id: Annotated[str, typer.Option("--snapshot-id")],
+    version: Annotated[str, typer.Option("--version")] = "challenger-0.1.0",
+    top: Annotated[int, typer.Option("--top", min=1, max=10)] = 5,
+) -> None:
+    """Score an existing DECISION snapshot without contacting the odds provider."""
+    _print_result(predict_challenger_snapshot(snapshot_id, version=version, top=top))
+
+
+@challenger_app.command("settle")
+def challenger_settle(
+    through: Annotated[str, typer.Option("--through")],
+    version: Annotated[str, typer.Option("--version")] = "challenger-0.1.0",
+) -> None:
+    """Settle predictions using existing independent CLOSE evidence."""
+    parsed_through = datetime.fromisoformat(through.replace("Z", "+00:00"))
+    _print_result(settle_predictions(through=parsed_through, version=version))
+
+
+@challenger_app.command("compare")
+def challenger_compare(
+    through_week: Annotated[int, typer.Option("--through-week")],
+    version: Annotated[str, typer.Option("--version")] = "challenger-0.1.0",
+    baseline: Annotated[str, typer.Option("--baseline")] = "1.1.2",
+) -> None:
+    """Compare matched challenger and frozen-model evaluations."""
+    _print_result(
+        compare_challenger(
+            through_week=through_week,
+            version=version,
+            baseline=baseline,
+        )
+    )
 
 
 @v11_app.command("predict")

@@ -1044,7 +1044,15 @@ def settle_predictions(
                     market, decision_line, closing_line
                 )
                 if bundle is None:
-                    bundle = load_frozen_bundle(version, resolved, verify_git=False)
+                    if version.startswith("challenger-"):
+                        from nfl_bets.challenger import load_challenger_bundle
+
+                        challenger = load_challenger_bundle(
+                            version, resolved, verify_git=False
+                        )
+                        bundle = cast(FrozenBundle, challenger)
+                    else:
+                        bundle = load_frozen_bundle(version, resolved, verify_git=False)
                 closing_win, closing_push, closing_loss = _closing_contract_distribution(
                     bundle.candidate,
                     market,
