@@ -1,0 +1,78 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<title>NFL model 1.0.1 development</title>
+<style>
+body{font-family:Arial,sans-serif;max-width:1200px;margin:32px auto;color:#222}
+h1,h2{color:#17365d}
+table{border-collapse:collapse;width:100%}
+th{background:#17365d;color:white}
+th,td{padding:8px;border:1px solid #ccd6e0;text-align:left}
+pre{background:#f4f7fa;padding:16px;overflow:auto}
+</style></head><body>
+<h1>NFL Model 1.0.1 — Development Only</h1>
+<p>Status: <strong>LOCKED_UNTESTED</strong>. The 2025 test has not been consumed.</p>
+<h2>Selected configuration</h2><pre>{
+  &quot;half_life&quot;: 4.0,
+  &quot;prior_strength&quot;: 0.5,
+  &quot;spread_ridge_alpha&quot;: 100.0,
+  &quot;total_ridge_alpha&quot;: 100.0,
+  &quot;spread_market_alpha&quot;: 0.0,
+  &quot;total_market_alpha&quot;: 0.0
+}</pre>
+<h2>Development metrics</h2><pre>{
+  &quot;spread&quot;: {
+    &quot;raw&quot;: {
+      &quot;rmse&quot;: 13.770911779413952,
+      &quot;mae&quot;: 10.708928436728197
+    },
+    &quot;market&quot;: {
+      &quot;rmse&quot;: 13.002390862514206,
+      &quot;mae&quot;: 10.02315634218289
+    },
+    &quot;market_regressed&quot;: {
+      &quot;rmse&quot;: 13.003412277780626,
+      &quot;mae&quot;: 10.025104536190964
+    },
+    &quot;probability&quot;: {
+      &quot;brier&quot;: 0.24984739484514765,
+      &quot;log_loss&quot;: 0.6928419770953689
+    },
+    &quot;market_probability&quot;: {
+      &quot;brier&quot;: 0.2502698494022679,
+      &quot;log_loss&quot;: 0.6936887346902597
+    },
+    &quot;calibration&quot;: {
+      &quot;intercept&quot;: 0.0001817136671806084,
+      &quot;slope&quot;: 1.003905079356029
+    }
+  },
+  &quot;total&quot;: {
+    &quot;raw&quot;: {
+      &quot;rmse&quot;: 13.742712901956322,
+      &quot;mae&quot;: 10.888340214755674
+    },
+    &quot;market&quot;: {
+      &quot;rmse&quot;: 13.248946638153878,
+      &quot;mae&quot;: 10.506047197640118
+    },
+    &quot;market_regressed&quot;: {
+      &quot;rmse&quot;: 13.248946638153878,
+      &quot;mae&quot;: 10.506047197640118
+    },
+    &quot;probability&quot;: {
+      &quot;brier&quot;: 0.24984703364929303,
+      &quot;log_loss&quot;: 0.6928411772756417
+    },
+    &quot;market_probability&quot;: {
+      &quot;brier&quot;: 0.25001800302849414,
+      &quot;log_loss&quot;: 0.6931833745159459
+    },
+    &quot;calibration&quot;: {
+      &quot;intercept&quot;: -0.04696015398693388,
+      &quot;slope&quot;: 0.0026746954391399604
+    }
+  }
+}</pre>
+<h2>Chronological folds</h2><table><thead><tr><th>season</th><th>rows</th><th>half_life</th><th>prior_strength</th><th>spread_ridge_alpha</th><th>spread_market_alpha</th><th>spread_raw_rmse</th><th>spread_final_rmse</th><th>spread_market_rmse</th><th>total_ridge_alpha</th><th>total_market_alpha</th><th>total_raw_rmse</th><th>total_final_rmse</th><th>total_market_rmse</th></tr></thead>
+<tbody><tr><td>2012</td><td>256</td><td>4.0</td><td>0.5</td><td>100.0</td><td>0.0</td><td>14.782962732662128</td><td>14.020875897657037</td><td>14.020875897657037</td><td>100.0</td><td>0.0</td><td>13.947718688611157</td><td>13.233148186939493</td><td>13.233148186939493</td></tr><tr><td>2013</td><td>256</td><td>4.0</td><td>0.25</td><td>100.0</td><td>0.0</td><td>13.41592641076602</td><td>12.679993160980016</td><td>12.679993160980016</td><td>100.0</td><td>0.0</td><td>14.52374249649219</td><td>14.012863788765664</td><td>14.012863788765664</td></tr><tr><td>2014</td><td>256</td><td>4.0</td><td>0.25</td><td>100.0</td><td>0.0</td><td>15.107116634496636</td><td>14.481062525761015</td><td>14.481062525761015</td><td>100.0</td><td>0.0</td><td>13.415013113563399</td><td>13.060182210635501</td><td>13.060182210635501</td></tr><tr><td>2015</td><td>256</td><td>4.0</td><td>0.5</td><td>100.0</td><td>0.0</td><td>13.570072851291448</td><td>12.875644704732265</td><td>12.875644704732265</td><td>100.0</td><td>0.0</td><td>13.56684239960198</td><td>13.331156235019527</td><td>13.331156235019527</td></tr><tr><td>2016</td><td>256</td><td>4.0</td><td>0.5</td><td>100.0</td><td>0.012406431994073115</td><td>12.530352466393621</td><td>11.785801872734812</td><td>11.787423780241381</td><td>100.0</td><td>0.0</td><td>13.251876747467456</td><td>12.428231471130557</td><td>12.428231471130557</td></tr><tr><td>2017</td><td>255</td><td>4.0</td><td>0.5</td><td>100.0</td><td>0.02353389767183708</td><td>14.019485153711804</td><td>13.129588456624838</td><td>13.122985372926362</td><td>100.0</td><td>0.0</td><td>14.346190585690026</td><td>14.179694125410325</td><td>14.179694125410325</td></tr><tr><td>2018</td><td>256</td><td>4.0</td><td>0.25</td><td>100.0</td><td>0.0036498668092551445</td><td>13.764576428852777</td><td>13.143534867770487</td><td>13.143848073813848</td><td>100.0</td><td>0.0</td><td>14.493165675400503</td><td>13.464725326756577</td><td>13.464725326756577</td></tr><tr><td>2019</td><td>256</td><td>4.0</td><td>0.5</td><td>100.0</td><td>0.0023410548526220675</td><td>14.198477370032032</td><td>13.127867903893616</td><td>13.127455127518052</td><td>100.0</td><td>0.0</td><td>13.749664332941052</td><td>13.428630793941727</td><td>13.428630793941727</td></tr><tr><td>2020</td><td>256</td><td>4.0</td><td>0.5</td><td>100.0</td><td>0.0</td><td>13.649829144027228</td><td>12.770778106188361</td><td>12.770778106188361</td><td>100.0</td><td>0.0</td><td>13.64339179716895</td><td>12.849603289109746</td><td>12.849603289109746</td></tr><tr><td>2021</td><td>272</td><td>4.0</td><td>0.5</td><td>100.0</td><td>0.0</td><td>14.534669357524832</td><td>13.669180932043485</td><td>13.669180932043485</td><td>100.0</td><td>0.0</td><td>13.544354558183302</td><td>13.281559252454908</td><td>13.281559252454908</td></tr><tr><td>2022</td><td>271</td><td>4.0</td><td>0.5</td><td>100.0</td><td>0.0</td><td>11.698015609008523</td><td>11.432861938435233</td><td>11.432861938435233</td><td>100.0</td><td>0.0</td><td>13.642069176569443</td><td>13.227919707142078</td><td>13.227919707142078</td></tr><tr><td>2023</td><td>272</td><td>4.0</td><td>0.5</td><td>100.0</td><td>0.016500444070035997</td><td>14.221585789125637</td><td>13.078448964743957</td><td>13.07072109716981</td><td>100.0</td><td>0.0</td><td>13.562356066183465</td><td>13.130146049991891</td><td>13.130146049991891</td></tr><tr><td>2024</td><td>272</td><td>4.0</td><td>0.5</td><td>100.0</td><td>0.0</td><td>13.229017635540123</td><td>12.6051460079744</td><td>12.6051460079744</td><td>100.0</td><td>0.0</td><td>12.9513189773536</td><td>12.551548123403649</td><td>12.551548123403649</td></tr></tbody></table>
+</body></html>

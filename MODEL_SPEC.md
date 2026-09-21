@@ -12,8 +12,11 @@ promotion gate sets the system to `PASS_ONLY`.
 - 2009 supplies initial prior history; primary samples are 2010–2025.
 - Every team-game feature uses only games with an earlier kickoff.
 - Each current-season four-game EWMA is constructed from `shift(1)` through `shift(4)`.
+- Half-life is selected from 1.0, 2.0, and 4.0 inside chronological development.
 - Weeks 1–4 blend the previous season's final four-game prior with current-season evidence;
   prior weight is zero after four completed current-season games.
+- The previous-season team prior is shrunk toward its season league mean using a strength selected
+  from 0.25, 0.50, 0.75, and 1.00 inside chronological development.
 - Development uses expanding season folds ending in 2024. Hyperparameters, market weights,
   residual mapping, calibration, features, and thresholds are frozen before 2025 evaluation.
 - The 2025 test may be consumed once per frozen version. It is never used for tuning V1.
@@ -35,9 +38,13 @@ walk-forward development predictions. Final projections are
 ## Probabilities, pushes, and key numbers
 
 Training-only empirical residual distributions convert projections to win/push/loss probability.
-Spread mapping preserves explicit signed mass at margins 3, 6, 7, 10, and 14. Probabilities are
-calibrated with a logistic calibration layer fit only to walk-forward predictions. Pushes are
-recorded and excluded from binary Brier/log-loss comparisons.
+Spread mapping preserves explicit signed mass at margins 3, 6, 7, 10, and 14. Spread depth and
+total level use training-fold terciles; each stratum is blended with the global distribution using
+`n / (n + 200)`. Probabilities are calibrated with a logistic calibration layer fit only to
+walk-forward predictions. Pushes are recorded and excluded from binary Brier/log-loss comparisons.
+
+Development uncertainty uses 1,000 fixed-seed season/game-block bootstrap samples. Version 1.0.0
+is frozen as `LOCKED_UNTESTED`; training is prohibited from using 2025 outcomes.
 
 ## Promotion gate
 

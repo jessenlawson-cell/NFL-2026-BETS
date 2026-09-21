@@ -5,6 +5,11 @@ Every authoritative artifact includes `source`, `retrieved_at_utc`, `source_upda
 `schema_version`, and a canonical row-level `content_hash`. Blank source-update timestamps mean the
 upstream source did not publish one; they never mean retrieval time.
 
+Row hashes exclude `retrieved_at_utc`, so retrieving unchanged business data again produces the
+same content hash. Repository-root CSVs are the only authoritative exports. `manifests/` records
+run coverage and dataset-level hashes; `data/raw/`, `data/staging/`, and SQLite are local runtime
+state rather than competing data authorities.
+
 ## `games.csv`
 
 Primary key: `game_id`. Canonical regular-season schedule, result, rest, weather/surface context,
@@ -17,14 +22,19 @@ closing spread/total lines, and closing prices. Core identifiers are `season`, `
 Primary key: (`game_id`, `team_id`). One pregame team snapshot with `kickoff_utc`, opponent,
 home/away flag, completed-game count, four-game EWMA offensive/defensive pass/rush EPA and success
 rate, `feature_as_of_utc`, and `half_life`. Every current-season rolling input is shifted by one game
-before weighting. These are V1's only football model features besides rest differential.
+before weighting. The ignored lag store preserves lag-1 through lag-4 values and contributing
+kickoffs. Model development selects half-life and prior strength using earlier seasons, then writes
+one authoritative configuration. These are V1's only football model features besides rest
+differential.
 
 ## `market_odds.csv`
 
 Append-only primary key: (`snapshot_id`, `provider_event_id`, `bookmaker_key`, `market`,
 `selection`). Stores the provider event, nflverse game match, bookmaker group, offered point,
 canonical line, American/decimal price, implied and no-vig probability, overround, quote update time,
-and retrieval metadata. Spread probability orientation is HOME; total orientation is OVER.
+and retrieval metadata. Its parent `raw_snapshots` row assigns the immutable purpose `DECISION`,
+`CLOSE`, or `DIAGNOSTIC`; purpose is never inferred from a prediction. Spread probability
+orientation is HOME; total orientation is OVER.
 
 ## `injuries.csv`
 
@@ -54,8 +64,60 @@ Append-only primary key: `bet_id`. Stores the full decision contract, including 
 available contract, price, stake/bankroll, model and market probability, expected ROI, version/data
 timestamps, close/CLV, result, and profit/loss. Prior predictions and losses are immutable.
 
+## `model_predictions.csv`
+
+Append-only primary key: `prediction_id`, deterministically derived from model version, snapshot,
+game, and market. Each row binds the frozen artifact/spec/policy hashes and Git commit to one
+pregame Pinnacle contract, feature as-of/hash, ridge adjustment, final projection, calibrated
+win/push/loss probabilities, consensus diagnostics, eligibility reason, and mandatory `PASS`
+decision. A prediction is never created at or after kickoff and is never updated after insertion.
+
+## `prospective_evaluations.csv`
+
+Append-only primary key: `evaluation_id`, deterministically derived from model version, game, and
+market. Settlement independently chooses the latest valid prediction backed by a `DECISION`
+snapshot and the latest valid Pinnacle contract backed by a later `CLOSE` snapshot. Both must be
+captured 90–5 minutes before kickoff with quotes no older than 30 minutes. Rows preserve exclusions
+and pushes; pushes never enter Brier or log-loss comparisons. The observer stores separate snapshot
+IDs, lines, two-sided prices, no-vig probabilities, raw probability movement, exact-contract price
+CLV, line movement, signed key numbers, and closing-contract win/push/loss probabilities.
+Closing-contract EV is
+`P_close(win) * decision_net_decimal_payout - P_close(loss)`.
+
+Every CLV field is null unless the distinct snapshots reconcile by game, provider event, market,
+orientation, Pinnacle contract, freshness, and time ordering. The legacy `line_clv` column is a
+compatibility alias of real `decision_line_clv`; it is never filled with a synthetic zero.
+
+## V1.1 runtime feature store
+
+`data/runtime/features/v11_team_game_lags.parquet` is an ignored, reproducible research artifact.
+It stores explicit lag-1 through lag-4 inputs for the V1 signals plus sack rate, quarterback-hit
+rate, neutral-rush EPA/success, and offensive/defensive snap continuity. It also carries pregame
+injury-cluster diagnostics. The tracked `manifests/v11_feature_inputs.latest.json` records its
+definition, source hashes, season coverage, cutoff, and content hash.
+
+Injury diagnostics are not V1.1 model features because historical injury coverage currently begins
+in 2025. The authoritative root CSVs remain unchanged; V1.1 does not overwrite V1's frozen
+`team_metrics.csv`.
+
 ## Operational SQLite tables
 
-`ingestion_runs`, `raw_snapshots`, `api_requests`, `market_consensus`, `model_test_registry`, and
-`schema_migrations` provide provenance, quota accounting, consensus diagnostics, one-time test
-enforcement, and migration history. They are local infrastructure rather than authoritative CSVs.
+`ingestion_runs`, `raw_snapshots`, `api_requests`, `capture_reservations`,
+`capture_reconciliations`, `market_consensus`, `model_test_registry`,
+`prospective_test_registry`, and `schema_migrations` provide provenance, quota accounting,
+paid-call reconciliation, consensus diagnostics, one-time test enforcement, and migration history.
+They are local infrastructure rather than authoritative CSVs.
+
+`capture_reservations` has one durable row per (`week_bucket`, `slot`, `request_kind`). Its stable
+`idempotency_key` is unique, and the reservation is acquired with an immediate SQLite transaction
+before a provider call can start. `api_requests` stores append-only attempts under that key,
+including attempt number, durable provider-call and response timestamps, sanitized provider request
+identifier, raw snapshot identity, and reconciliation status. `capture_reconciliations` is the
+append-only operator/provider evidence ledger. A retry is possible only after an operator records
+either that no call started or that the provider confirmed the ambiguous attempt was not billed.
+Responses and confirmed billed attempts are never retried.
+
+`raw_snapshots.snapshot_purpose` is required and protected by an immutability trigger. Legacy
+snapshots migrate to `DIAGNOSTIC`, so they cannot silently become decision or closing evidence.
+The 16-call weekly pilot schedule pre-registers each slot as DECISION or CLOSE; CLOSE slots never
+invoke the prediction path.

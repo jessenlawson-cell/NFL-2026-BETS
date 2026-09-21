@@ -35,4 +35,3 @@ strict = true
 packages = ["nfl_bets"]
 mypy_path = "src"
 ignore_missing_imports = true
-

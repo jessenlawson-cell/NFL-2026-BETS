@@ -1,2 +1,0 @@
-season,week,team_id,player_id,full_name,position,injury_status,practice_status,report_primary_injury,report_secondary_injury,snap_share_impact,replacement_quality,source,retrieved_at_utc,source_updated_at_utc,schema_version,content_hash
-2025,1,BUF,player-1,Fixture Player,QB,Questionable,Limited,Ankle,,,,nflverse:nflreadpy,2026-09-13T18:12:40.634070Z,,1.0.0,844a6bc7e06e629c5953239d9bffedd8367f2ac24db483ffbfeeeedc776943da

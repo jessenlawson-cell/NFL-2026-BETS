@@ -9,7 +9,7 @@ from nfl_bets.validation import validate_all
 
 
 def test_empty_schema_controlled_repository_validates(tmp_path) -> None:
-    settings = Settings(root=tmp_path)
+    settings = Settings.for_root(tmp_path)
     initialize_database(settings)
     for name, schema in ARTIFACT_SCHEMAS.items():
         pl.DataFrame({column: [] for column in schema.columns}).write_csv(

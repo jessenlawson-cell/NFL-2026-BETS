@@ -70,6 +70,73 @@ class EmpiricalResidualMapper:
         return OutcomeProbabilities(win / total, push / total, loss / total)
 
 
+class StratifiedResidualMapper:
+    """Tercile residual mapper shrunk toward a global empirical distribution."""
+
+    def __init__(
+        self,
+        *,
+        key_numbers: tuple[int, ...] = (),
+        shrinkage: float = 200.0,
+        absolute_strata: bool = False,
+    ) -> None:
+        self.key_numbers = key_numbers
+        self.shrinkage = shrinkage
+        self.absolute_strata = absolute_strata
+        self.edges: np.ndarray | None = None
+        self.global_mapper = EmpiricalResidualMapper(key_numbers=key_numbers)
+        self.strata: dict[int, tuple[EmpiricalResidualMapper, int]] = {}
+
+    def fit(
+        self, actual: np.ndarray, projection: np.ndarray, stratum_value: np.ndarray
+    ) -> StratifiedResidualMapper:
+        actual_array = np.asarray(actual, dtype=float)
+        projection_array = np.asarray(projection, dtype=float)
+        values = np.asarray(stratum_value, dtype=float)
+        if self.absolute_strata:
+            values = np.abs(values)
+        valid = np.isfinite(actual_array) & np.isfinite(projection_array) & np.isfinite(values)
+        actual_array = actual_array[valid]
+        projection_array = projection_array[valid]
+        values = values[valid]
+        self.global_mapper.fit(actual_array, projection_array)
+        self.edges = np.unique(np.quantile(values, [1.0 / 3.0, 2.0 / 3.0]))
+        bins = np.digitize(values, self.edges, right=True)
+        self.strata = {}
+        for index in np.unique(bins):
+            mask = bins == index
+            count = int(mask.sum())
+            if count < 30:
+                continue
+            mapper = EmpiricalResidualMapper(key_numbers=self.key_numbers).fit(
+                actual_array[mask], projection_array[mask]
+            )
+            self.strata[int(index)] = (mapper, count)
+        return self
+
+    def probabilities(
+        self, projection: float, line: float, stratum_value: float | None = None
+    ) -> OutcomeProbabilities:
+        if self.edges is None:
+            raise RuntimeError("Stratified residual mapper is not fitted")
+        value = line if stratum_value is None else stratum_value
+        if self.absolute_strata:
+            value = abs(value)
+        index = int(np.digitize([value], self.edges, right=True)[0])
+        global_probability = self.global_mapper.probabilities(projection, line)
+        local = self.strata.get(index)
+        if local is None:
+            return global_probability
+        mapper, count = local
+        local_probability = mapper.probabilities(projection, line)
+        weight = count / (count + self.shrinkage)
+        return OutcomeProbabilities(
+            win=weight * local_probability.win + (1.0 - weight) * global_probability.win,
+            push=weight * local_probability.push + (1.0 - weight) * global_probability.push,
+            loss=weight * local_probability.loss + (1.0 - weight) * global_probability.loss,
+        )
+
+
 class ProbabilityCalibrator:
     def __init__(self) -> None:
         self.model = LogisticRegression(C=1_000_000.0, solver="lbfgs")

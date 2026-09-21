@@ -1,0 +1,1285 @@
+{
+  "authoritative_artifacts": {
+    "games": {
+      "content_hash": "0e815f8389bf078dead383b766f7d686dd9a4612ad2d2aff3cbd4859a0a1a1c9",
+      "path": "games.csv",
+      "rows": 4703
+    },
+    "injuries": {
+      "content_hash": "35489daf6d389a6aac7ffe213663ec46aa45d3e5fa9d73f12ec02f5bdf3c1722",
+      "path": "injuries.csv",
+      "rows": 6216
+    },
+    "player_usage": {
+      "content_hash": "e7bb8b4aa9f67de762af339bca00e3d8dcf3b9b125ed7d654e834064441ac857",
+      "path": "player_usage.csv",
+      "rows": 312060
+    }
+  },
+  "availability": {
+    "injuries": [
+      {
+        "rows": 4821,
+        "season": 2009,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 4491,
+        "season": 2010,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 4971,
+        "season": 2011,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 5533,
+        "season": 2012,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 5070,
+        "season": 2013,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 5078,
+        "season": 2014,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 5232,
+        "season": 2015,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 5115,
+        "season": 2016,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 5104,
+        "season": 2017,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 5133,
+        "season": 2018,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 5392,
+        "season": 2019,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 5661,
+        "season": 2020,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 5587,
+        "season": 2021,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 5682,
+        "season": 2022,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 5599,
+        "season": 2023,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 6215,
+        "season": 2024,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 6068,
+        "season": 2025,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 433,
+        "season": 2026,
+        "status": "AVAILABLE"
+      }
+    ],
+    "pbp": [
+      {
+        "rows": 46519,
+        "season": 2009,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 46892,
+        "season": 2010,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 47448,
+        "season": 2011,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 47834,
+        "season": 2012,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 48158,
+        "season": 2013,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 47629,
+        "season": 2014,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 48122,
+        "season": 2015,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 47651,
+        "season": 2016,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 47245,
+        "season": 2017,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 47109,
+        "season": 2018,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 47260,
+        "season": 2019,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 47705,
+        "season": 2020,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 49922,
+        "season": 2021,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 49434,
+        "season": 2022,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 49665,
+        "season": 2023,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 49492,
+        "season": 2024,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 48771,
+        "season": 2025,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 2940,
+        "season": 2026,
+        "status": "AVAILABLE"
+      }
+    ],
+    "schedules": [
+      {
+        "rows": 267,
+        "season": 2009,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 267,
+        "season": 2010,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 267,
+        "season": 2011,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 267,
+        "season": 2012,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 267,
+        "season": 2013,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 267,
+        "season": 2014,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 267,
+        "season": 2015,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 267,
+        "season": 2016,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 267,
+        "season": 2017,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 267,
+        "season": 2018,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 267,
+        "season": 2019,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 269,
+        "season": 2020,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 285,
+        "season": 2021,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 284,
+        "season": 2022,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 285,
+        "season": 2023,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 285,
+        "season": 2024,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 285,
+        "season": 2025,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 272,
+        "season": 2026,
+        "status": "AVAILABLE"
+      }
+    ],
+    "snap_counts": [
+      {
+        "reason": "nflverse snap counts begin in 2012",
+        "season": 2009,
+        "status": "NOT_AVAILABLE"
+      },
+      {
+        "reason": "nflverse snap counts begin in 2012",
+        "season": 2010,
+        "status": "NOT_AVAILABLE"
+      },
+      {
+        "reason": "nflverse snap counts begin in 2012",
+        "season": 2011,
+        "status": "NOT_AVAILABLE"
+      },
+      {
+        "reason": "source returned no rows",
+        "season": 2012,
+        "status": "EMPTY"
+      },
+      {
+        "rows": 23799,
+        "season": 2013,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 23864,
+        "season": 2014,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 23842,
+        "season": 2015,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 23890,
+        "season": 2016,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 23862,
+        "season": 2017,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 23877,
+        "season": 2018,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 23862,
+        "season": 2019,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 24999,
+        "season": 2020,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 26468,
+        "season": 2021,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 26381,
+        "season": 2022,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 26540,
+        "season": 2023,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 26615,
+        "season": 2024,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 26612,
+        "season": 2025,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 1585,
+        "season": 2026,
+        "status": "AVAILABLE"
+      }
+    ],
+    "team_stats": [
+      {
+        "rows": 534,
+        "season": 2009,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 534,
+        "season": 2010,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 534,
+        "season": 2011,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 534,
+        "season": 2012,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 534,
+        "season": 2013,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 534,
+        "season": 2014,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 534,
+        "season": 2015,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 534,
+        "season": 2016,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 534,
+        "season": 2017,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 534,
+        "season": 2018,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 534,
+        "season": 2019,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 538,
+        "season": 2020,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 570,
+        "season": 2021,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 568,
+        "season": 2022,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 570,
+        "season": 2023,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 570,
+        "season": 2024,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 570,
+        "season": 2025,
+        "status": "AVAILABLE"
+      },
+      {
+        "rows": 34,
+        "season": 2026,
+        "status": "AVAILABLE"
+      }
+    ]
+  },
+  "include_pbp": true,
+  "raw_datasets": {
+    "injuries:2009": {
+      "content_hash": "d12cc75579894878b9b0a8582f231e442462f80f9ccff1d62f51ddf3aaca93ca",
+      "dataset": "injuries",
+      "path": "data/raw/nflverse/injuries_2009.parquet",
+      "rows": 4821,
+      "season": 2009,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "injuries:2010": {
+      "content_hash": "0376ff700ff95ffc7fc50b86a22941bd683a4107400fc9f0a7d675061efc1d9a",
+      "dataset": "injuries",
+      "path": "data/raw/nflverse/injuries_2010.parquet",
+      "rows": 4491,
+      "season": 2010,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "injuries:2011": {
+      "content_hash": "fbe463450cadafb45fad3b15d3d474403e2f88344f4f84ff83154da82f4935ad",
+      "dataset": "injuries",
+      "path": "data/raw/nflverse/injuries_2011.parquet",
+      "rows": 4971,
+      "season": 2011,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "injuries:2012": {
+      "content_hash": "a238d5e4af5c662a576540a7fe50f71185008d2e9e995ae76f96e54ef1fcfa25",
+      "dataset": "injuries",
+      "path": "data/raw/nflverse/injuries_2012.parquet",
+      "rows": 5533,
+      "season": 2012,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "injuries:2013": {
+      "content_hash": "58e5c0bdc1d8f9d907d9b11cd044800b86573a4321c4a1b72308ad579d78928a",
+      "dataset": "injuries",
+      "path": "data/raw/nflverse/injuries_2013.parquet",
+      "rows": 5070,
+      "season": 2013,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "injuries:2014": {
+      "content_hash": "b61fff9320799ce3ba03fb263f72193166be663f9fd6eec0b6b2597d97edbce0",
+      "dataset": "injuries",
+      "path": "data/raw/nflverse/injuries_2014.parquet",
+      "rows": 5078,
+      "season": 2014,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "injuries:2015": {
+      "content_hash": "b17b3df9d35adb005e6df91f25999bbe8fec413df02e18b68f41bdad2eb4bdf6",
+      "dataset": "injuries",
+      "path": "data/raw/nflverse/injuries_2015.parquet",
+      "rows": 5232,
+      "season": 2015,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "injuries:2016": {
+      "content_hash": "bdfdc2f69eac23a92b0ef21f82820c29fef665996dc877bb6243d9b946b7bddf",
+      "dataset": "injuries",
+      "path": "data/raw/nflverse/injuries_2016.parquet",
+      "rows": 5115,
+      "season": 2016,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "injuries:2017": {
+      "content_hash": "5f1dda6592877a26ade565a6864b90b86a5255917ab6d06305bec6bb981462f8",
+      "dataset": "injuries",
+      "path": "data/raw/nflverse/injuries_2017.parquet",
+      "rows": 5104,
+      "season": 2017,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "injuries:2018": {
+      "content_hash": "d45f4a0280f1f10abd7f72965d29bd17e11b1539d78e536620709130d964c052",
+      "dataset": "injuries",
+      "path": "data/raw/nflverse/injuries_2018.parquet",
+      "rows": 5133,
+      "season": 2018,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "injuries:2019": {
+      "content_hash": "f582f091ba157f2495b11583fe98f1e02ced22da2a99c5d40a3cf3821e8c6734",
+      "dataset": "injuries",
+      "path": "data/raw/nflverse/injuries_2019.parquet",
+      "rows": 5392,
+      "season": 2019,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "injuries:2020": {
+      "content_hash": "005018dc64106e9cede5e1b6b6ea387e160c126758bac0698309784e14bad131",
+      "dataset": "injuries",
+      "path": "data/raw/nflverse/injuries_2020.parquet",
+      "rows": 5661,
+      "season": 2020,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "injuries:2021": {
+      "content_hash": "7c1eb2d85e2c274fdcd76477403db8d602406b8dd18b5a18e09e93a0a15fa489",
+      "dataset": "injuries",
+      "path": "data/raw/nflverse/injuries_2021.parquet",
+      "rows": 5587,
+      "season": 2021,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "injuries:2022": {
+      "content_hash": "55b2ce3b864497357a2cae1fff36b3721fa0d7ac241dd620a6d97bad6a76ce6e",
+      "dataset": "injuries",
+      "path": "data/raw/nflverse/injuries_2022.parquet",
+      "rows": 5682,
+      "season": 2022,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "injuries:2023": {
+      "content_hash": "77c2a8cbd3e656fb26f1362b5b0997714dc355710a94224f78170fae6687ecf1",
+      "dataset": "injuries",
+      "path": "data/raw/nflverse/injuries_2023.parquet",
+      "rows": 5599,
+      "season": 2023,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "injuries:2024": {
+      "content_hash": "cdde27fcf929ce6d211ee24141fa8bb595669b74f1a5b54151c655789801254b",
+      "dataset": "injuries",
+      "path": "data/raw/nflverse/injuries_2024.parquet",
+      "rows": 6215,
+      "season": 2024,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "injuries:2025": {
+      "content_hash": "8d8a87d4cf13cf53c0a01dccd9c76805dcff9be7fcbab0be3724f078bffc01ad",
+      "dataset": "injuries",
+      "path": "data/raw/nflverse/injuries_2025.parquet",
+      "rows": 6068,
+      "season": 2025,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "injuries:2026": {
+      "content_hash": "87bd996587ba08e1a347896e0298bc8843854662b00f2617dc61e53677eb04e6",
+      "dataset": "injuries",
+      "path": "data/raw/nflverse/injuries_2026.parquet",
+      "rows": 433,
+      "season": 2026,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "pbp:2009": {
+      "content_hash": "5bfb6559343c04092d1ad66c1479782d085d9f390e6806be0a7ca7ec37124806",
+      "dataset": "pbp",
+      "path": "data/raw/nflverse/pbp_2009.parquet",
+      "rows": 46519,
+      "season": 2009,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "pbp:2010": {
+      "content_hash": "74ad605fea53c27afd00eee71c53b86b5cfbf7133d1a7b5b8f0067d817e55785",
+      "dataset": "pbp",
+      "path": "data/raw/nflverse/pbp_2010.parquet",
+      "rows": 46892,
+      "season": 2010,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "pbp:2011": {
+      "content_hash": "26727f9d2b0e4f9f616e746b87b9a29359f37a4b484f66f7312baf883d85e958",
+      "dataset": "pbp",
+      "path": "data/raw/nflverse/pbp_2011.parquet",
+      "rows": 47448,
+      "season": 2011,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "pbp:2012": {
+      "content_hash": "3277aded9792c419cc853cf307f2206c3fb0908d91750b4e1d3d66b567407c66",
+      "dataset": "pbp",
+      "path": "data/raw/nflverse/pbp_2012.parquet",
+      "rows": 47834,
+      "season": 2012,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "pbp:2013": {
+      "content_hash": "2a31a7cd0e7e2306f626a0f1f4bb96679e5b3e92a8729695858adca35d8b2686",
+      "dataset": "pbp",
+      "path": "data/raw/nflverse/pbp_2013.parquet",
+      "rows": 48158,
+      "season": 2013,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "pbp:2014": {
+      "content_hash": "c6910558e235dac664b1b7f02654d47ea8d51904ef9ace5d4f015165604e0b12",
+      "dataset": "pbp",
+      "path": "data/raw/nflverse/pbp_2014.parquet",
+      "rows": 47629,
+      "season": 2014,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "pbp:2015": {
+      "content_hash": "b3314a52b781a00417528b2e3388d2596098cdbe7b565d3c962d7171a98ae70f",
+      "dataset": "pbp",
+      "path": "data/raw/nflverse/pbp_2015.parquet",
+      "rows": 48122,
+      "season": 2015,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "pbp:2016": {
+      "content_hash": "75fde790db65a5e5765930e5780c1452e96a6a58d4d802c79f10f5842a387bbc",
+      "dataset": "pbp",
+      "path": "data/raw/nflverse/pbp_2016.parquet",
+      "rows": 47651,
+      "season": 2016,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "pbp:2017": {
+      "content_hash": "0166785545b15de785075a154668996b8cb71294f7a7c3d9acbf4ae90a99f2dc",
+      "dataset": "pbp",
+      "path": "data/raw/nflverse/pbp_2017.parquet",
+      "rows": 47245,
+      "season": 2017,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "pbp:2018": {
+      "content_hash": "152e44436368be4c253d14c0cb0f8335a53f3790ce5ebdbb7648551371d62d2b",
+      "dataset": "pbp",
+      "path": "data/raw/nflverse/pbp_2018.parquet",
+      "rows": 47109,
+      "season": 2018,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "pbp:2019": {
+      "content_hash": "3878b8c99f5f3d977203b0e249b55ca913e59db3971420075ed35a0991610f6e",
+      "dataset": "pbp",
+      "path": "data/raw/nflverse/pbp_2019.parquet",
+      "rows": 47260,
+      "season": 2019,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "pbp:2020": {
+      "content_hash": "d86d1e3f98b64bd839c8533a3867cb0f0e3d6216cd11bddd11efd5bc6c594a04",
+      "dataset": "pbp",
+      "path": "data/raw/nflverse/pbp_2020.parquet",
+      "rows": 47705,
+      "season": 2020,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "pbp:2021": {
+      "content_hash": "d2fbf41c83c843e1c6db4ec117ef9b4b49b7730666f21005fc9951dce09d0e0a",
+      "dataset": "pbp",
+      "path": "data/raw/nflverse/pbp_2021.parquet",
+      "rows": 49922,
+      "season": 2021,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "pbp:2022": {
+      "content_hash": "311971fb4404dc8759a9f77c50ef2f4933fbd2d24deb5a747987058d0b6788a8",
+      "dataset": "pbp",
+      "path": "data/raw/nflverse/pbp_2022.parquet",
+      "rows": 49434,
+      "season": 2022,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "pbp:2023": {
+      "content_hash": "19fc2ce8abb85be47fad16ceff178c67d6581309e87d53bb70c4531373867b1e",
+      "dataset": "pbp",
+      "path": "data/raw/nflverse/pbp_2023.parquet",
+      "rows": 49665,
+      "season": 2023,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "pbp:2024": {
+      "content_hash": "e332d33a0c83a33073cde85f8e8f1ac0caebcc552eda7e7c92612ff306bafa73",
+      "dataset": "pbp",
+      "path": "data/raw/nflverse/pbp_2024.parquet",
+      "rows": 49492,
+      "season": 2024,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "pbp:2025": {
+      "content_hash": "5ed293fdf54d79e34426133829f3111faf577db29b8cfc25cf910d75eb55b2ef",
+      "dataset": "pbp",
+      "path": "data/raw/nflverse/pbp_2025.parquet",
+      "rows": 48771,
+      "season": 2025,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "pbp:2026": {
+      "content_hash": "b3105320db58bb7e4b327f47e1b6cdd3bd7520d6121d0e22c45841d540dd6dd8",
+      "dataset": "pbp",
+      "path": "data/raw/nflverse/pbp_2026.parquet",
+      "rows": 2940,
+      "season": 2026,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "schedules:2009": {
+      "content_hash": "b720c554d58f8e8bc4ef4fe3ada0528f1f4065bde6926395f5c4ed46f6c19579",
+      "dataset": "schedules",
+      "path": "data/raw/nflverse/schedules_2009.parquet",
+      "rows": 267,
+      "season": 2009,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "schedules:2010": {
+      "content_hash": "c6eb6d6390b8808ab6fe7a1c177d45b2d31c4dc3f7b5ccf3a9ff525c9afe758f",
+      "dataset": "schedules",
+      "path": "data/raw/nflverse/schedules_2010.parquet",
+      "rows": 267,
+      "season": 2010,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "schedules:2011": {
+      "content_hash": "367cd43a9a9499d875a00dc12d2476ea3bfabc36dfbb82399a695f5230618232",
+      "dataset": "schedules",
+      "path": "data/raw/nflverse/schedules_2011.parquet",
+      "rows": 267,
+      "season": 2011,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "schedules:2012": {
+      "content_hash": "94fd313c6126390c47c936cc04c986ec6a2526cad776f078e61c8e740171ceb0",
+      "dataset": "schedules",
+      "path": "data/raw/nflverse/schedules_2012.parquet",
+      "rows": 267,
+      "season": 2012,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "schedules:2013": {
+      "content_hash": "48b55301b46a4acc55b1263555b01d62475fce5196f943176cf5bb23b5b979b6",
+      "dataset": "schedules",
+      "path": "data/raw/nflverse/schedules_2013.parquet",
+      "rows": 267,
+      "season": 2013,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "schedules:2014": {
+      "content_hash": "56c8544f26975a429dd1dcd67996b28cb3680c742c79c2367bfea1e35ae93940",
+      "dataset": "schedules",
+      "path": "data/raw/nflverse/schedules_2014.parquet",
+      "rows": 267,
+      "season": 2014,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "schedules:2015": {
+      "content_hash": "68c3bf6df90e969fe80aa46eb3351ad624e5e7c3f85c664644811508bbb647c3",
+      "dataset": "schedules",
+      "path": "data/raw/nflverse/schedules_2015.parquet",
+      "rows": 267,
+      "season": 2015,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "schedules:2016": {
+      "content_hash": "8f71a4074c589e5a94c43b1b89e6028f65a89f99b950d7a02457bc28657b1790",
+      "dataset": "schedules",
+      "path": "data/raw/nflverse/schedules_2016.parquet",
+      "rows": 267,
+      "season": 2016,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "schedules:2017": {
+      "content_hash": "6616b0e0cb9b8358881654e4aa5e22e24bb67958a337cbb13782d27a3c3a04e7",
+      "dataset": "schedules",
+      "path": "data/raw/nflverse/schedules_2017.parquet",
+      "rows": 267,
+      "season": 2017,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "schedules:2018": {
+      "content_hash": "0517aae45dacef1cabea9e0345ea2a3bc7dda1299dd76cb1ffd50c4696a58291",
+      "dataset": "schedules",
+      "path": "data/raw/nflverse/schedules_2018.parquet",
+      "rows": 267,
+      "season": 2018,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "schedules:2019": {
+      "content_hash": "4db9adbb172de1476cecd73088981b353a6c05e97768dad1cf631dadfa403a56",
+      "dataset": "schedules",
+      "path": "data/raw/nflverse/schedules_2019.parquet",
+      "rows": 267,
+      "season": 2019,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "schedules:2020": {
+      "content_hash": "93e73882e9b596f8c244dab217bcb5aeab70c4e4431b6cd4dd7607a2383f4398",
+      "dataset": "schedules",
+      "path": "data/raw/nflverse/schedules_2020.parquet",
+      "rows": 269,
+      "season": 2020,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "schedules:2021": {
+      "content_hash": "6c2b25a860bf549a5172d655df209debbd9b2c41b24402d33cc01950abf69a55",
+      "dataset": "schedules",
+      "path": "data/raw/nflverse/schedules_2021.parquet",
+      "rows": 285,
+      "season": 2021,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "schedules:2022": {
+      "content_hash": "4df92f492652dacc5460a44ec948a703f9fe7be75a0aba2d4dfd4987b481bb9c",
+      "dataset": "schedules",
+      "path": "data/raw/nflverse/schedules_2022.parquet",
+      "rows": 284,
+      "season": 2022,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "schedules:2023": {
+      "content_hash": "374486417a0ba32495817457c26b77e09499c7614b0285086cf41ccef9d759cc",
+      "dataset": "schedules",
+      "path": "data/raw/nflverse/schedules_2023.parquet",
+      "rows": 285,
+      "season": 2023,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "schedules:2024": {
+      "content_hash": "53f6e036f443c71e6aa54396f4890259ce7580c1052b30424559418612ea1b31",
+      "dataset": "schedules",
+      "path": "data/raw/nflverse/schedules_2024.parquet",
+      "rows": 285,
+      "season": 2024,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "schedules:2025": {
+      "content_hash": "81066567d1c138059687806a679f5a233d91196fb535ea06a2541596dfdd378c",
+      "dataset": "schedules",
+      "path": "data/raw/nflverse/schedules_2025.parquet",
+      "rows": 285,
+      "season": 2025,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "schedules:2026": {
+      "content_hash": "dd89d0ec77759ff0b3a2edeff1f767acda8b1332cef7a3064354aef23f276fcb",
+      "dataset": "schedules",
+      "path": "data/raw/nflverse/schedules_2026.parquet",
+      "rows": 272,
+      "season": 2026,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "snap_counts:2013": {
+      "content_hash": "d29d329873c8a21abc1bdf18e42795be50f2016b86950b4cb21efbd379856b7b",
+      "dataset": "snap_counts",
+      "path": "data/raw/nflverse/snap_counts_2013.parquet",
+      "rows": 23799,
+      "season": 2013,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "snap_counts:2014": {
+      "content_hash": "85ecf70bc071a2951df109d2480426f90b0d2f363c6a17944827cae5fd3ed4bb",
+      "dataset": "snap_counts",
+      "path": "data/raw/nflverse/snap_counts_2014.parquet",
+      "rows": 23864,
+      "season": 2014,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "snap_counts:2015": {
+      "content_hash": "033b77dfd67f738ea13db22fe9a8379ac14eae7ba9aa233eaccfe25d7dfbb7b7",
+      "dataset": "snap_counts",
+      "path": "data/raw/nflverse/snap_counts_2015.parquet",
+      "rows": 23842,
+      "season": 2015,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "snap_counts:2016": {
+      "content_hash": "96253e5f7b3ad5f0f5675fc8c3421e5ee285fb08d27553445dd6a099703dedd9",
+      "dataset": "snap_counts",
+      "path": "data/raw/nflverse/snap_counts_2016.parquet",
+      "rows": 23890,
+      "season": 2016,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "snap_counts:2017": {
+      "content_hash": "5a2dd66a86f467c464adf165040161d713887ac795b20a97d1d472193a778da9",
+      "dataset": "snap_counts",
+      "path": "data/raw/nflverse/snap_counts_2017.parquet",
+      "rows": 23862,
+      "season": 2017,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "snap_counts:2018": {
+      "content_hash": "edc3660d5927beb661474017e91a0c8e92b55c21abc0cfe3ce76812cbde31c45",
+      "dataset": "snap_counts",
+      "path": "data/raw/nflverse/snap_counts_2018.parquet",
+      "rows": 23877,
+      "season": 2018,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "snap_counts:2019": {
+      "content_hash": "b22cf49f33cfe10d731abff7686e9c469f4ef8db52e45c78e8f1d1434f551437",
+      "dataset": "snap_counts",
+      "path": "data/raw/nflverse/snap_counts_2019.parquet",
+      "rows": 23862,
+      "season": 2019,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "snap_counts:2020": {
+      "content_hash": "b31c6699c3cfa9448156e236a9a353baf5b622d061538bf4b3e3325abc4b32c9",
+      "dataset": "snap_counts",
+      "path": "data/raw/nflverse/snap_counts_2020.parquet",
+      "rows": 24999,
+      "season": 2020,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "snap_counts:2021": {
+      "content_hash": "8d4d49e4f252e85046e4a191fb8e91e552d1813e7d0efa630d5e03645b1b8a47",
+      "dataset": "snap_counts",
+      "path": "data/raw/nflverse/snap_counts_2021.parquet",
+      "rows": 26468,
+      "season": 2021,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "snap_counts:2022": {
+      "content_hash": "deddb4739d147e3765b0ce84671fa0762e5c8c03bbf3f76bb2269411643cf49e",
+      "dataset": "snap_counts",
+      "path": "data/raw/nflverse/snap_counts_2022.parquet",
+      "rows": 26381,
+      "season": 2022,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "snap_counts:2023": {
+      "content_hash": "d97c76dfb1c9d39969cad69feddef7504b9f4eee1e4cc97bea6ed2f58cea4c2a",
+      "dataset": "snap_counts",
+      "path": "data/raw/nflverse/snap_counts_2023.parquet",
+      "rows": 26540,
+      "season": 2023,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "snap_counts:2024": {
+      "content_hash": "cc9dceb476879589f36faa1b3f9bef68cb1e2405a8638e8074c9e4d61c8c4d9a",
+      "dataset": "snap_counts",
+      "path": "data/raw/nflverse/snap_counts_2024.parquet",
+      "rows": 26615,
+      "season": 2024,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "snap_counts:2025": {
+      "content_hash": "7379993b72ec0c770c5d8de45e4845a46d27493685b7ceee0b34c23dfebf8d6e",
+      "dataset": "snap_counts",
+      "path": "data/raw/nflverse/snap_counts_2025.parquet",
+      "rows": 26612,
+      "season": 2025,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "snap_counts:2026": {
+      "content_hash": "003c69a9650501008cad98044b37f3e2bfbb1e0e5be3d5520d4e77cc4f6b7dc8",
+      "dataset": "snap_counts",
+      "path": "data/raw/nflverse/snap_counts_2026.parquet",
+      "rows": 1585,
+      "season": 2026,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "team_stats:2009": {
+      "content_hash": "755a84977b7feb6e2fd8592cc51e317b9eed31ea6a14aa7315845bc74c373118",
+      "dataset": "team_stats",
+      "path": "data/raw/nflverse/team_stats_2009.parquet",
+      "rows": 534,
+      "season": 2009,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "team_stats:2010": {
+      "content_hash": "c2d415a5ca4a2ec6938e85ee8d83a262fc42e05f867d76d2a8adb162d052435a",
+      "dataset": "team_stats",
+      "path": "data/raw/nflverse/team_stats_2010.parquet",
+      "rows": 534,
+      "season": 2010,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "team_stats:2011": {
+      "content_hash": "ff4f6a256a847248fd5fe57a3cd0ffb38d21bcb9a49fbcfb8f00fb6f9561fb2b",
+      "dataset": "team_stats",
+      "path": "data/raw/nflverse/team_stats_2011.parquet",
+      "rows": 534,
+      "season": 2011,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "team_stats:2012": {
+      "content_hash": "3d1267b719c0a8f24597c86eb8598734ca71a4eae23c8281f0df61ad65a7f617",
+      "dataset": "team_stats",
+      "path": "data/raw/nflverse/team_stats_2012.parquet",
+      "rows": 534,
+      "season": 2012,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "team_stats:2013": {
+      "content_hash": "3719b2f827750674280443d991ac41e1b400fc53648ea507a481bd927eca1583",
+      "dataset": "team_stats",
+      "path": "data/raw/nflverse/team_stats_2013.parquet",
+      "rows": 534,
+      "season": 2013,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "team_stats:2014": {
+      "content_hash": "e9e2f94fb6e75aa2b07324479614299e91dd46b4f1115cc25ff3a135d72976f6",
+      "dataset": "team_stats",
+      "path": "data/raw/nflverse/team_stats_2014.parquet",
+      "rows": 534,
+      "season": 2014,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "team_stats:2015": {
+      "content_hash": "e3f511c351754f8645acd47d517803d13a8e199a23148c5046d8f74ea57add2c",
+      "dataset": "team_stats",
+      "path": "data/raw/nflverse/team_stats_2015.parquet",
+      "rows": 534,
+      "season": 2015,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "team_stats:2016": {
+      "content_hash": "3ceb33deaf0a268c30df5755db5454b926685d349b1c60a474220fddd46a9220",
+      "dataset": "team_stats",
+      "path": "data/raw/nflverse/team_stats_2016.parquet",
+      "rows": 534,
+      "season": 2016,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "team_stats:2017": {
+      "content_hash": "11d7da55ce46d10eb1bad6ff003658cb0ed671f17d798c3c502b36f34350e5b3",
+      "dataset": "team_stats",
+      "path": "data/raw/nflverse/team_stats_2017.parquet",
+      "rows": 534,
+      "season": 2017,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "team_stats:2018": {
+      "content_hash": "3c689edef0cc8f6cf2fa2d5fa47b4c15244110dd47b5b0eb0bf348eee3976593",
+      "dataset": "team_stats",
+      "path": "data/raw/nflverse/team_stats_2018.parquet",
+      "rows": 534,
+      "season": 2018,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "team_stats:2019": {
+      "content_hash": "33397cacc61bc24c6820b3f620abf4ec033c7cf95d7a44f7d8b32ea2ef230666",
+      "dataset": "team_stats",
+      "path": "data/raw/nflverse/team_stats_2019.parquet",
+      "rows": 534,
+      "season": 2019,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "team_stats:2020": {
+      "content_hash": "160155b9cebba587aee4c5320dc3baec061251d5d8c4be86092cf4dc20b9eb0e",
+      "dataset": "team_stats",
+      "path": "data/raw/nflverse/team_stats_2020.parquet",
+      "rows": 538,
+      "season": 2020,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "team_stats:2021": {
+      "content_hash": "0f0f1e5e64455ce33860ee8f60763c901f3f4e76167b91d96aec91bbccf9bb95",
+      "dataset": "team_stats",
+      "path": "data/raw/nflverse/team_stats_2021.parquet",
+      "rows": 570,
+      "season": 2021,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "team_stats:2022": {
+      "content_hash": "8c2663adbc1194e19a66ae526acf26a69126bec7d51545be742679f4c424e3ca",
+      "dataset": "team_stats",
+      "path": "data/raw/nflverse/team_stats_2022.parquet",
+      "rows": 568,
+      "season": 2022,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "team_stats:2023": {
+      "content_hash": "0657b552187267cac75644a0bfc29f78a4cf6f631864d0d88c265c7df18419d4",
+      "dataset": "team_stats",
+      "path": "data/raw/nflverse/team_stats_2023.parquet",
+      "rows": 570,
+      "season": 2023,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "team_stats:2024": {
+      "content_hash": "4b0c0e512c68fcfd62899e07715c75bc969550d85a06a61be246bf458616e761",
+      "dataset": "team_stats",
+      "path": "data/raw/nflverse/team_stats_2024.parquet",
+      "rows": 570,
+      "season": 2024,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "team_stats:2025": {
+      "content_hash": "a01374076e6b842ce943e0fb0613639ef3ca20177fed216112902885728e5205",
+      "dataset": "team_stats",
+      "path": "data/raw/nflverse/team_stats_2025.parquet",
+      "rows": 570,
+      "season": 2025,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    },
+    "team_stats:2026": {
+      "content_hash": "25a2031bb60a1666735e9b41bdbb07a126abf431ea9a8f2cdccc20318c519782",
+      "dataset": "team_stats",
+      "path": "data/raw/nflverse/team_stats_2026.parquet",
+      "rows": 34,
+      "season": 2026,
+      "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+      "source_updated_at_utc": null
+    }
+  },
+  "retrieved_at_utc": "2026-09-20T15:42:19.119895Z",
+  "run_id": "51b3f104-3c43-44d9-b907-25cee11064b5",
+  "schema_version": "1.1.0",
+  "seasons": [
+    2009,
+    2010,
+    2011,
+    2012,
+    2013,
+    2014,
+    2015,
+    2016,
+    2017,
+    2018,
+    2019,
+    2020,
+    2021,
+    2022,
+    2023,
+    2024,
+    2025,
+    2026
+  ],
+  "source": "nflverse:nflreadpy",
+  "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
+  "source_updated_at_utc": null,
+  "status": "COMPLETE"
+}

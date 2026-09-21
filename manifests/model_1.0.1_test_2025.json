@@ -1,0 +1,24 @@
+{
+  "candidate_artifact_hash": "d79183f76c223e0de316f604aa45523f60220bec681106c2ac91830f51901201",
+  "completed_at_utc": "2026-09-14T01:27:23.538970Z",
+  "input_hash": "82529d51f9b2c6d4e16d02b2fd6fdb589604677c434f0c2a9930e06896249740",
+  "model_version": "1.0.1",
+  "promotion_gates": {
+    "spread_brier_beats_market": false,
+    "spread_calibration_acceptable": false,
+    "spread_log_loss_beats_market": false,
+    "total_brier_beats_market": true,
+    "total_calibration_acceptable": false,
+    "total_log_loss_beats_market": true
+  },
+  "report_hashes": {
+    "games_csv": "1edb024e8456c47c81ad6b08f5d77d7b573eebc27b5980a4b8fdc5205961cb95",
+    "gates_csv": "84493da3bbe6054a96360e7c05d6753a62f787fc661fc1c9a6454a0ef59564d0",
+    "html": "5fc11776ad7abdddf2f31206214a1c07aadb71cac75572d904fc0438e8136d75",
+    "json": "c4f32a2cb545bb975dfd9b0b127025cf0d45de1778ba81e0d934c2cb0aea1de1"
+  },
+  "schema_version": "1.0.0",
+  "started_at_utc": "2026-09-14T01:27:23.286232Z",
+  "status": "PASS_ONLY",
+  "test_season": 2025
+}
