@@ -1,19 +1,19 @@
 {
   "authoritative_artifacts": {
     "games": {
-      "content_hash": "7bcc95b607c2c08a19410eb796e13ac07623e3f5567c45590cb983000e47568e",
+      "content_hash": "0e815f8389bf078dead383b766f7d686dd9a4612ad2d2aff3cbd4859a0a1a1c9",
       "path": "games.csv",
       "rows": 4703
     },
     "injuries": {
-      "content_hash": "e3c2e6509d183ab9a9301004bbfbc3461a542d86eaa0e9b49a7e3d6f6d501a87",
+      "content_hash": "35489daf6d389a6aac7ffe213663ec46aa45d3e5fa9d73f12ec02f5bdf3c1722",
       "path": "injuries.csv",
-      "rows": 5965
+      "rows": 6216
     },
     "player_usage": {
-      "content_hash": "e8d37ddb9a33bf750b216be55216f7bc170efe3e080eee6bcfb089d8885f6fbb",
+      "content_hash": "e7bb8b4aa9f67de762af339bca00e3d8dcf3b9b125ed7d654e834064441ac857",
       "path": "player_usage.csv",
-      "rows": 310662
+      "rows": 312060
     }
   },
   "availability": {
@@ -104,7 +104,7 @@
         "status": "AVAILABLE"
       },
       {
-        "rows": 182,
+        "rows": 433,
         "season": 2026,
         "status": "AVAILABLE"
       }
@@ -196,7 +196,7 @@
         "status": "AVAILABLE"
       },
       {
-        "rows": 323,
+        "rows": 2940,
         "season": 2026,
         "status": "AVAILABLE"
       }
@@ -380,7 +380,7 @@
         "status": "AVAILABLE"
       },
       {
-        "rows": 187,
+        "rows": 1585,
         "season": 2026,
         "status": "AVAILABLE"
       }
@@ -472,7 +472,7 @@
         "status": "AVAILABLE"
       },
       {
-        "rows": 4,
+        "rows": 34,
         "season": 2026,
         "status": "AVAILABLE"
       }
@@ -634,16 +634,16 @@
       "source_updated_at_utc": null
     },
     "injuries:2026": {
-      "content_hash": "66190327e26ece499ec3becde60fb84f00ddc22a46fb69aa0fa59213d7d5172e",
+      "content_hash": "87bd996587ba08e1a347896e0298bc8843854662b00f2617dc61e53677eb04e6",
       "dataset": "injuries",
       "path": "data/raw/nflverse/injuries_2026.parquet",
-      "rows": 182,
+      "rows": 433,
       "season": 2026,
       "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
       "source_updated_at_utc": null
     },
     "pbp:2009": {
-      "content_hash": "e5da271b9cf40d46aa683aa8dce39c539b4184eadd31cca9d906bc62e0f955b6",
+      "content_hash": "5bfb6559343c04092d1ad66c1479782d085d9f390e6806be0a7ca7ec37124806",
       "dataset": "pbp",
       "path": "data/raw/nflverse/pbp_2009.parquet",
       "rows": 46519,
@@ -652,7 +652,7 @@
       "source_updated_at_utc": null
     },
     "pbp:2010": {
-      "content_hash": "dc0e08d57eb24a9ff1338152744f6ca456bf98b762ee929a94de4d89e89807f4",
+      "content_hash": "74ad605fea53c27afd00eee71c53b86b5cfbf7133d1a7b5b8f0067d817e55785",
       "dataset": "pbp",
       "path": "data/raw/nflverse/pbp_2010.parquet",
       "rows": 46892,
@@ -661,7 +661,7 @@
       "source_updated_at_utc": null
     },
     "pbp:2011": {
-      "content_hash": "b639c14b9da217bf95d900302da9c17cc22959e03f89d28b221b9784c80b8d20",
+      "content_hash": "26727f9d2b0e4f9f616e746b87b9a29359f37a4b484f66f7312baf883d85e958",
       "dataset": "pbp",
       "path": "data/raw/nflverse/pbp_2011.parquet",
       "rows": 47448,
@@ -670,7 +670,7 @@
       "source_updated_at_utc": null
     },
     "pbp:2012": {
-      "content_hash": "6f0d93d05188c3614ad39ce454a9b269d9509c0aa8ba931c7b4ba5f1a4390ebe",
+      "content_hash": "3277aded9792c419cc853cf307f2206c3fb0908d91750b4e1d3d66b567407c66",
       "dataset": "pbp",
       "path": "data/raw/nflverse/pbp_2012.parquet",
       "rows": 47834,
@@ -679,7 +679,7 @@
       "source_updated_at_utc": null
     },
     "pbp:2013": {
-      "content_hash": "a78ae07485a55b63c8c01a18a89de7b36629ba4138f76c96caade9c241efe2a8",
+      "content_hash": "2a31a7cd0e7e2306f626a0f1f4bb96679e5b3e92a8729695858adca35d8b2686",
       "dataset": "pbp",
       "path": "data/raw/nflverse/pbp_2013.parquet",
       "rows": 48158,
@@ -688,7 +688,7 @@
       "source_updated_at_utc": null
     },
     "pbp:2014": {
-      "content_hash": "db5f70b59bc6e3cd358b4ff3691738c4fab2f3023a2b792ee8f817f9a326c4a3",
+      "content_hash": "c6910558e235dac664b1b7f02654d47ea8d51904ef9ace5d4f015165604e0b12",
       "dataset": "pbp",
       "path": "data/raw/nflverse/pbp_2014.parquet",
       "rows": 47629,
@@ -697,7 +697,7 @@
       "source_updated_at_utc": null
     },
     "pbp:2015": {
-      "content_hash": "c7861f6051aaa8dc41b4012c305172d5535c2910b5141ac17bd7e3b87051bf1b",
+      "content_hash": "b3314a52b781a00417528b2e3388d2596098cdbe7b565d3c962d7171a98ae70f",
       "dataset": "pbp",
       "path": "data/raw/nflverse/pbp_2015.parquet",
       "rows": 48122,
@@ -706,7 +706,7 @@
       "source_updated_at_utc": null
     },
     "pbp:2016": {
-      "content_hash": "b463991a756f6c36edefc91fd458e373f27e99dda0aed4560f73c53e5b681e79",
+      "content_hash": "75fde790db65a5e5765930e5780c1452e96a6a58d4d802c79f10f5842a387bbc",
       "dataset": "pbp",
       "path": "data/raw/nflverse/pbp_2016.parquet",
       "rows": 47651,
@@ -715,7 +715,7 @@
       "source_updated_at_utc": null
     },
     "pbp:2017": {
-      "content_hash": "7369228d478a06ed9234f065308242187889fcc695cde557c70c09e4ca3a866f",
+      "content_hash": "0166785545b15de785075a154668996b8cb71294f7a7c3d9acbf4ae90a99f2dc",
       "dataset": "pbp",
       "path": "data/raw/nflverse/pbp_2017.parquet",
       "rows": 47245,
@@ -724,7 +724,7 @@
       "source_updated_at_utc": null
     },
     "pbp:2018": {
-      "content_hash": "c9477ef3065e906f5de0e8489f82f4673fd317c8cf84ab3064388027c78f95be",
+      "content_hash": "152e44436368be4c253d14c0cb0f8335a53f3790ce5ebdbb7648551371d62d2b",
       "dataset": "pbp",
       "path": "data/raw/nflverse/pbp_2018.parquet",
       "rows": 47109,
@@ -733,7 +733,7 @@
       "source_updated_at_utc": null
     },
     "pbp:2019": {
-      "content_hash": "21e17daf6f4fa4654bebfc3bf97e0077731ab8ecc43f9b3125d879be3d4e37ff",
+      "content_hash": "3878b8c99f5f3d977203b0e249b55ca913e59db3971420075ed35a0991610f6e",
       "dataset": "pbp",
       "path": "data/raw/nflverse/pbp_2019.parquet",
       "rows": 47260,
@@ -742,7 +742,7 @@
       "source_updated_at_utc": null
     },
     "pbp:2020": {
-      "content_hash": "a3ff9726a87634d22f786d107199a522150fe90a0326258fb9f15bb4e80a1179",
+      "content_hash": "d86d1e3f98b64bd839c8533a3867cb0f0e3d6216cd11bddd11efd5bc6c594a04",
       "dataset": "pbp",
       "path": "data/raw/nflverse/pbp_2020.parquet",
       "rows": 47705,
@@ -751,7 +751,7 @@
       "source_updated_at_utc": null
     },
     "pbp:2021": {
-      "content_hash": "aa8dec05bb188140f08ad56345395a1708e9012c102f90988c76e149e9b9d074",
+      "content_hash": "d2fbf41c83c843e1c6db4ec117ef9b4b49b7730666f21005fc9951dce09d0e0a",
       "dataset": "pbp",
       "path": "data/raw/nflverse/pbp_2021.parquet",
       "rows": 49922,
@@ -760,7 +760,7 @@
       "source_updated_at_utc": null
     },
     "pbp:2022": {
-      "content_hash": "ea18c6b92fb2390327a0dcaef628d7b1a726b9b9399c668839244716e302048b",
+      "content_hash": "311971fb4404dc8759a9f77c50ef2f4933fbd2d24deb5a747987058d0b6788a8",
       "dataset": "pbp",
       "path": "data/raw/nflverse/pbp_2022.parquet",
       "rows": 49434,
@@ -769,7 +769,7 @@
       "source_updated_at_utc": null
     },
     "pbp:2023": {
-      "content_hash": "dd42da597b12a47b00c4ced90888e7b7b16152f0019c8f5a059e9902a571f8a1",
+      "content_hash": "19fc2ce8abb85be47fad16ceff178c67d6581309e87d53bb70c4531373867b1e",
       "dataset": "pbp",
       "path": "data/raw/nflverse/pbp_2023.parquet",
       "rows": 49665,
@@ -778,7 +778,7 @@
       "source_updated_at_utc": null
     },
     "pbp:2024": {
-      "content_hash": "6b8bbc96fc49f4c90da818abb4a5733b4b32180ff4e094c923c56e04b8e31b18",
+      "content_hash": "e332d33a0c83a33073cde85f8e8f1ac0caebcc552eda7e7c92612ff306bafa73",
       "dataset": "pbp",
       "path": "data/raw/nflverse/pbp_2024.parquet",
       "rows": 49492,
@@ -787,7 +787,7 @@
       "source_updated_at_utc": null
     },
     "pbp:2025": {
-      "content_hash": "06d5fcffaaf15c615bc92f8cb9ae3ac9a1814f2cd3a08d67d7859831d536f711",
+      "content_hash": "5ed293fdf54d79e34426133829f3111faf577db29b8cfc25cf910d75eb55b2ef",
       "dataset": "pbp",
       "path": "data/raw/nflverse/pbp_2025.parquet",
       "rows": 48771,
@@ -796,10 +796,10 @@
       "source_updated_at_utc": null
     },
     "pbp:2026": {
-      "content_hash": "18f6f7e80c320818a1616f6718d13b697e3f5f28531bdaa653ebaaa68b62f48d",
+      "content_hash": "b3105320db58bb7e4b327f47e1b6cdd3bd7520d6121d0e22c45841d540dd6dd8",
       "dataset": "pbp",
       "path": "data/raw/nflverse/pbp_2026.parquet",
-      "rows": 323,
+      "rows": 2940,
       "season": 2026,
       "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
       "source_updated_at_utc": null
@@ -958,7 +958,7 @@
       "source_updated_at_utc": null
     },
     "schedules:2026": {
-      "content_hash": "bc63f587e4500dd7197ba9b2a8e968950802d05ff01ee7a46a163e8fc696f072",
+      "content_hash": "dd89d0ec77759ff0b3a2edeff1f767acda8b1332cef7a3064354aef23f276fcb",
       "dataset": "schedules",
       "path": "data/raw/nflverse/schedules_2026.parquet",
       "rows": 272,
@@ -1084,10 +1084,10 @@
       "source_updated_at_utc": null
     },
     "snap_counts:2026": {
-      "content_hash": "10eb6e21b1c368a945ff9e69e857ab081584174482236ccdc28ff7b52bd9799a",
+      "content_hash": "003c69a9650501008cad98044b37f3e2bfbb1e0e5be3d5520d4e77cc4f6b7dc8",
       "dataset": "snap_counts",
       "path": "data/raw/nflverse/snap_counts_2026.parquet",
-      "rows": 187,
+      "rows": 1585,
       "season": 2026,
       "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
       "source_updated_at_utc": null
@@ -1246,18 +1246,18 @@
       "source_updated_at_utc": null
     },
     "team_stats:2026": {
-      "content_hash": "432c36f93750f360b7961dc6da5d4d237fcef17d72d126c7f1cb6b86bfb3c0f0",
+      "content_hash": "25a2031bb60a1666735e9b41bdbb07a126abf431ea9a8f2cdccc20318c519782",
       "dataset": "team_stats",
       "path": "data/raw/nflverse/team_stats_2026.parquet",
-      "rows": 4,
+      "rows": 34,
       "season": 2026,
       "source_update_status": "UNAVAILABLE_FROM_PROVIDER_LIBRARY",
       "source_updated_at_utc": null
     }
   },
-  "retrieved_at_utc": "2026-09-13T19:20:14.760705Z",
-  "run_id": "4e628e8e-14b3-43cd-a731-9b62c85b04a5",
-  "schema_version": "1.0.0",
+  "retrieved_at_utc": "2026-09-20T15:42:19.119895Z",
+  "run_id": "51b3f104-3c43-44d9-b907-25cee11064b5",
+  "schema_version": "1.1.0",
   "seasons": [
     2009,
     2010,

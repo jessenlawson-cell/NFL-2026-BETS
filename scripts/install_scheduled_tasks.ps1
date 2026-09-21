@@ -1,6 +1,8 @@
 param(
     [Parameter(Mandatory = $true)]
-    [string]$PilotWeekBucket
+    [string]$PilotWeekBucket,
+    [string]$Version = "1.1.2",
+    [string]$ShadowVersion = "challenger-0.2.0"
 )
 
 $ErrorActionPreference = "Stop"
@@ -12,6 +14,9 @@ if (-not (Test-Path -LiteralPath $pilotReport)) {
 $pilot = Get-Content -Raw -LiteralPath $pilotReport | ConvertFrom-Json
 if ($pilot.status -ne "PASSED" -or $pilot.passed_slots -ne 16) {
     throw "Scheduled tasks cannot be installed until all 16 manual pilot slots pass."
+}
+if ($pilot.model_version -ne $Version -or $pilot.shadow_model_version -ne $ShadowVersion) {
+    throw "The pilot report does not verify both requested model versions."
 }
 $timeZone = Get-TimeZone
 if ($timeZone.Id -ne "Eastern Standard Time") {
@@ -38,19 +43,48 @@ $slots = @(
 )
 
 $runner = Join-Path $PSScriptRoot "run_scheduled_slot.ps1"
+$principal = New-ScheduledTaskPrincipal `
+    -UserId ([Security.Principal.WindowsIdentity]::GetCurrent().Name) `
+    -LogonType Interactive -RunLevel Limited
+$settings = New-ScheduledTaskSettingsSet `
+    -MultipleInstances IgnoreNew -ExecutionTimeLimit (New-TimeSpan -Hours 2)
 foreach ($slot in $slots) {
     $taskName = "NFL-BETS-$($slot.Name)"
-    $arguments = "-NoProfile -ExecutionPolicy Bypass -File `"$runner`" -Slot $($slot.Name)"
+    $arguments = (
+        "-NoProfile -ExecutionPolicy Bypass -File `"$runner`" " +
+        "-Slot $($slot.Name) -Version $Version -ShadowVersion $ShadowVersion"
+    )
     $action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument $arguments
     $trigger = New-ScheduledTaskTrigger -Weekly -DaysOfWeek $slot.Day -At $slot.Time
-    $settings = New-ScheduledTaskSettingsSet -MultipleInstances IgnoreNew
     Register-ScheduledTask `
         -TaskName $taskName `
         -Description "NFL observer capture; no retries and PASS-only predictions." `
         -Action $action `
         -Trigger $trigger `
         -Settings $settings `
+        -Principal $principal `
         -Force | Out-Null
 }
 
-Write-Output "Installed 16 NFL observer tasks after verified manual pilot $PilotWeekBucket."
+$refreshRunner = Join-Path $PSScriptRoot "run_feature_refresh.ps1"
+$refreshes = @(
+    @{ Week = 3; At = [datetime]"2026-09-29T18:00:00" },
+    @{ Week = 4; At = [datetime]"2026-10-06T18:00:00" },
+    @{ Week = 5; At = [datetime]"2026-10-13T18:00:00" },
+    @{ Week = 6; At = [datetime]"2026-10-20T18:00:00" },
+    @{ Week = 7; At = [datetime]"2026-10-27T18:00:00" }
+)
+foreach ($refresh in $refreshes) {
+    $arguments = (
+        "-NoProfile -ExecutionPolicy Bypass -File `"$refreshRunner`" " +
+        "-CompletedWeek $($refresh.Week)"
+    )
+    Register-ScheduledTask `
+        -TaskName "NFL-BETS-feature-refresh-week-$($refresh.Week)" `
+        -Description "Refresh observations only; frozen model weights remain unchanged." `
+        -Action (New-ScheduledTaskAction -Execute "powershell.exe" -Argument $arguments) `
+        -Trigger (New-ScheduledTaskTrigger -Once -At $refresh.At) `
+        -Settings $settings -Principal $principal -Force | Out-Null
+}
+
+Write-Output "Installed 16 captures and 5 observation refreshes after pilot $PilotWeekBucket."

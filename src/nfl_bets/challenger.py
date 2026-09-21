@@ -32,6 +32,7 @@ from nfl_bets.prospective import (
     _parse_utc,
     _stable_id,
     _validate_latest_completed_game,
+    settle_predictions,
 )
 from nfl_bets.util import atomic_write_text, canonical_hash, iso_utc, sha256_bytes
 
@@ -52,6 +53,8 @@ class PreparedChallengerFeatures:
     games: pl.DataFrame
     as_of: datetime
     input_hash: str
+    materialized_by_market: dict[str, pl.DataFrame] | None = None
+
 
 def rank_shadow_candidates(
     candidates: list[dict[str, Any]], *, top: int = 5
@@ -75,9 +78,7 @@ def rank_shadow_candidates(
                 "conservative_probability_edge": edge,
                 "conservative_expected_roi": expected_roi,
                 "shadow_label": (
-                    "SHADOW_CANDIDATE"
-                    if edge >= 0.02 and expected_roi > 0.0
-                    else "PASS"
+                    "SHADOW_CANDIDATE" if edge >= 0.02 and expected_roi > 0.0 else "PASS"
                 ),
             }
         )
@@ -204,20 +205,32 @@ def _prepare_challenger_features(
     as_of = _parse_utc(manifest.get("as_of_utc"), "challenger feature as-of")
     lags = pl.read_parquet(feature_path)
     validate_lag_boundaries(lags)
-    base_materialized = materialize_feature_configuration(
-        lags,
-        half_life=bundle.candidate.selected_half_life,
-        prior_strength=bundle.candidate.selected_prior_strength,
-        metrics=CHALLENGER_METRICS,
-    )
-    materialized = materialize_opponent_adjusted(
-        lags,
-        base_materialized,
-        half_life=bundle.candidate.selected_half_life,
-        prior_strength=bundle.candidate.selected_prior_strength,
-    )
+    materialized_by_market: dict[str, pl.DataFrame] = {}
+    for market, component in (
+        ("spreads", bundle.candidate.spread),
+        ("totals", bundle.candidate.total),
+    ):
+        base_materialized = materialize_feature_configuration(
+            lags,
+            half_life=component.selected_half_life,
+            prior_strength=component.selected_prior_strength,
+            metrics=CHALLENGER_METRICS,
+        )
+        materialized_by_market[market] = materialize_opponent_adjusted(
+            lags,
+            base_materialized,
+            half_life=component.selected_half_life,
+            prior_strength=component.selected_prior_strength,
+        )
     games = pl.read_csv(settings.root / "games.csv", infer_schema_length=100_000)
-    return PreparedChallengerFeatures(lags, materialized, games, as_of, input_hash)
+    return PreparedChallengerFeatures(
+        lags,
+        materialized_by_market["spreads"],
+        games,
+        as_of,
+        input_hash,
+        materialized_by_market,
+    )
 
 
 def _challenger_game_features(
@@ -225,37 +238,40 @@ def _challenger_game_features(
     snapshot_time: datetime,
     prepared: PreparedChallengerFeatures,
     candidate: ChallengerCandidate,
-) -> tuple[np.ndarray, str, dict[str, Any]]:
+) -> tuple[dict[str, np.ndarray], str, dict[str, Any]]:
     if prepared.as_of >= snapshot_time:
         raise ProspectiveDataError("Challenger feature as-of must predate the odds snapshot")
     selected_lags = prepared.lags.filter(pl.col("game_id") == game_id)
-    selected = prepared.materialized.filter(pl.col("game_id") == game_id)
     game = prepared.games.filter(pl.col("game_id") == game_id)
-    if selected.height != 2 or selected_lags.height != 2 or game.height != 1:
+    if selected_lags.height != 2 or game.height != 1:
         raise ProspectiveDataError("Challenger feature/game rows are missing or duplicated")
     validate_lag_boundaries(selected_lags)
     target_kickoff = _parse_utc(game["kickoff_utc"][0], "game kickoff")
-    _validate_latest_completed_game(
-        selected_lags, prepared.games, target_kickoff, prepared.as_of
-    )
-    matrix = build_matchup_frame(selected, game).select(candidate.feature_columns)
-    if matrix.height != 1 or matrix.null_count().row(0) != tuple(0 for _ in matrix.columns):
-        raise ProspectiveDataError("Challenger pregame model features are incomplete")
+    _validate_latest_completed_game(selected_lags, prepared.games, target_kickoff, prepared.as_of)
+    features: dict[str, np.ndarray] = {}
+    materialized_by_market = prepared.materialized_by_market or {
+        "spreads": prepared.materialized,
+        "totals": prepared.materialized,
+    }
+    for market, component in (
+        ("spreads", candidate.spread),
+        ("totals", candidate.total),
+    ):
+        selected = materialized_by_market[market].filter(pl.col("game_id") == game_id)
+        if selected.height != 2:
+            raise ProspectiveDataError("Challenger feature/game rows are missing or duplicated")
+        matrix = build_matchup_frame(selected, game).select(component.feature_columns)
+        if matrix.height != 1 or matrix.null_count().row(0) != tuple(0 for _ in matrix.columns):
+            raise ProspectiveDataError("Challenger pregame model features are incomplete")
+        features[market] = matrix.to_numpy()
     hash_columns = [
         "game_id",
         "team_id",
         "kickoff_dt",
-        *[
-            f"lag{offset}_{metric}"
-            for offset in range(1, 5)
-            for metric in CHALLENGER_METRICS
-        ],
+        *[f"lag{offset}_{metric}" for offset in range(1, 5) for metric in CHALLENGER_METRICS],
     ]
     row_hash = sha256_bytes(
-        selected_lags.select(hash_columns)
-        .sort(["game_id", "team_id"])
-        .write_csv()
-        .encode()
+        selected_lags.select(hash_columns).sort(["game_id", "team_id"]).write_csv().encode()
     )
     injuries: dict[str, Any] = {}
     for row in selected_lags.select("team_id", "is_home", *INJURY_DIAGNOSTICS).to_dicts():
@@ -274,7 +290,7 @@ def _challenger_game_features(
         )
         else "INCOMPLETE_UNWEIGHTED"
     )
-    return matrix.to_numpy(), row_hash, injuries
+    return features, row_hash, injuries
 
 
 def _book_candidates(
@@ -283,7 +299,7 @@ def _book_candidates(
     game_label: str,
     market: str,
     rows: list[dict[str, Any]],
-    features: np.ndarray,
+    features: dict[str, np.ndarray],
     candidate: ChallengerCandidate,
     injuries: dict[str, Any],
     snapshot_time: datetime,
@@ -320,15 +336,32 @@ def _book_candidates(
             abs_tol=1e-9,
         ):
             continue
-        scores = score_challenger_contract(candidate, market, line, features)
-        drivers = quantitative_drivers(candidate, market, features)
+        market_features = features[market]
+        scores = score_challenger_contract(
+            candidate,
+            market,
+            line,
+            market_features,
+            market_probability=float(by_selection[orientation]["vig_free_probability"]),
+        )
+        drivers = quantitative_drivers(candidate, market, market_features)
         conditional = float(scores["calibrated_non_push_win_probability"])
         push = float(scores["model_push_probability"])
+        weighted_adjustment = float(scores["raw_adjustment"]) * float(scores["adjustment_weight"])
         for selection in (orientation, opposite):
             quote = by_selection[selection]
             price = int(quote["american_price"])
             net_profit = price / 100.0 if price > 0 else 100.0 / abs(price)
             model_probability = conditional if selection == orientation else 1.0 - conditional
+            football_direction = (
+                "NEUTRAL"
+                if weighted_adjustment == 0.0
+                else (
+                    "SUPPORTS_SELECTION"
+                    if (selection == orientation) == (weighted_adjustment > 0.0)
+                    else "OPPOSES_SELECTION"
+                )
+            )
             results.append(
                 {
                     "game_id": game_id,
@@ -342,13 +375,21 @@ def _book_candidates(
                     "net_decimal_profit": net_profit,
                     "break_even_probability": 1.0 / (1.0 + net_profit),
                     "raw_football_projection": scores["raw_football_projection"],
-                    "market_regressed_projection": None,
+                    "market_regressed_projection": scores["final_projection"],
                     "final_projection": scores["final_projection"],
+                    "football_weight": scores["adjustment_weight"],
+                    "weighted_adjustment": weighted_adjustment,
+                    "signal_source": scores["signal_source"],
+                    "football_direction": football_direction,
+                    "selected_model_family": scores["selected_model_family"],
+                    "selected_feature_set": scores["selected_feature_set"],
+                    "component_disagreement": scores["component_disagreement"],
+                    "feature_drift_max_abs_z": scores["feature_drift_max_abs_z"],
+                    "feature_outside_training_range": scores["feature_outside_training_range"],
                     "model_probability": model_probability,
                     "push_probability": push,
                     "market_fair_probability": float(quote["vig_free_probability"]),
-                    "probability_edge": model_probability
-                    - float(quote["vig_free_probability"]),
+                    "probability_edge": model_probability - float(quote["vig_free_probability"]),
                     "expected_roi": (1.0 - push)
                     * (model_probability * net_profit - (1.0 - model_probability)),
                     "probability_margin": scores["probability_margin"],
@@ -375,8 +416,13 @@ def _book_candidates(
 def _power_rankings(
     prepared: PreparedChallengerFeatures, candidate: ChallengerCandidate
 ) -> list[dict[str, Any]]:
+    materialized_by_market = prepared.materialized_by_market or {
+        "spreads": prepared.materialized,
+        "totals": prepared.materialized,
+    }
     latest = (
-        prepared.materialized.filter(pl.col("kickoff_dt") > pl.lit(prepared.as_of))
+        materialized_by_market["spreads"]
+        .filter(pl.col("kickoff_dt") > pl.lit(prepared.as_of))
         .sort(["team_id", "kickoff_dt", "game_id"])
         .group_by("team_id", maintain_order=True)
         .first()
@@ -415,12 +461,42 @@ def _power_rankings(
             }
         )
     games = pl.DataFrame(game_rows)
-    matrix = build_matchup_frame(pl.DataFrame(rows), games).select(
-        "game_id", "team_id", *candidate.feature_columns
+    matrix = build_matchup_frame(pl.DataFrame(rows), games)
+    spread_x = matrix.select(candidate.spread.feature_columns).to_numpy()
+    margin = np.asarray(candidate.spread.model.predict(spread_x), dtype=float)
+
+    total_latest = materialized_by_market["totals"].filter(
+        pl.col("team_id").is_in(latest["team_id"].implode())
+        & (pl.col("kickoff_dt") > pl.lit(prepared.as_of))
     )
-    x = matrix.select(candidate.feature_columns).to_numpy()
-    margin = np.asarray(candidate.spread_model.predict(x), dtype=float)
-    total = np.asarray(candidate.total_model.predict(x), dtype=float)
+    total_averages = total_latest.select(
+        *[pl.col(metric).mean().alias(metric) for metric in MODEL_TEAM_METRICS]
+    ).row(0, named=True)
+    total_rows: list[dict[str, Any]] = []
+    for team in (
+        total_latest.sort(["team_id", "kickoff_dt", "game_id"])
+        .group_by("team_id", maintain_order=True)
+        .first()
+        .iter_rows(named=True)
+    ):
+        game_id = f"neutral_{team['team_id']}"
+        total_rows.extend(
+            [
+                {
+                    "game_id": game_id,
+                    "is_home": True,
+                    **{metric: team[metric] for metric in MODEL_TEAM_METRICS},
+                },
+                {
+                    "game_id": game_id,
+                    "is_home": False,
+                    **{metric: total_averages[metric] for metric in MODEL_TEAM_METRICS},
+                },
+            ]
+        )
+    total_matrix = build_matchup_frame(pl.DataFrame(total_rows), games)
+    total_x = total_matrix.select(candidate.total.feature_columns).to_numpy()
+    total = np.asarray(candidate.total.model.predict(total_x), dtype=float)
     centered_margin = margin - float(np.mean(margin))
     centered_total = total - float(np.mean(total))
     rankings = [
@@ -429,7 +505,7 @@ def _power_rankings(
             "neutral_field_rating": float(centered_margin[index]),
             "total_environment_rating": float(centered_total[index]),
         }
-        for index, team_id in enumerate(matrix["team_id"].to_list())
+        for index, team_id in enumerate(games["team_id"].to_list())
     ]
     ordered = sorted(
         rankings,
@@ -443,7 +519,7 @@ def _power_rankings(
 def predict_challenger_snapshot(
     snapshot_id: str,
     *,
-    version: str = "challenger-0.1.0",
+    version: str = "challenger-0.2.0",
     top: int = 5,
     settings: Settings | None = None,
     prediction_time: datetime | None = None,
@@ -476,8 +552,7 @@ def predict_challenger_snapshot(
             )
         }
         games = {
-            str(row["game_id"]): dict(row)
-            for row in connection.execute("SELECT * FROM games")
+            str(row["game_id"]): dict(row) for row in connection.execute("SELECT * FROM games")
         }
     if snapshot is None or snapshot["snapshot_purpose"] != "DECISION":
         raise ProspectiveDataError(
@@ -497,7 +572,7 @@ def predict_challenger_snapshot(
         ).append(quote)
     records: list[dict[str, Any]] = []
     candidate_rows: list[dict[str, Any]] = []
-    feature_cache: dict[str, tuple[np.ndarray, str, dict[str, Any]]] = {}
+    feature_cache: dict[str, tuple[dict[str, np.ndarray], str, dict[str, Any]]] = {}
     for (event_id, game_id, market), market_rows in sorted(grouped.items()):
         game = games.get(game_id)
         if game is None:
@@ -506,8 +581,10 @@ def predict_challenger_snapshot(
         if now >= kickoff:
             continue
         week = int(game["week"])
-        if not int(bundle.policy["prospective_start_week"]) <= week <= int(
-            bundle.policy["prospective_end_week"]
+        if (
+            not int(bundle.policy["prospective_start_week"])
+            <= week
+            <= int(bundle.policy["prospective_end_week"])
         ):
             continue
         contract = _anchor_contract(
@@ -528,10 +605,14 @@ def predict_challenger_snapshot(
             features = None
             row_hash = None
             injuries = {"injury_data_status": "UNAVAILABLE"}
-        scores: dict[str, float] = {}
+        scores: dict[str, float | int | str] = {}
         if contract.valid and contract.line is not None and features is not None:
             scores = score_challenger_contract(
-                bundle.candidate, market, contract.line, features
+                bundle.candidate,
+                market,
+                contract.line,
+                features[market],
+                market_probability=contract.orientation_probability,
             )
             candidate_rows.extend(
                 _book_candidates(
@@ -649,13 +730,70 @@ def predict_challenger_snapshot(
     return report
 
 
+def latest_valid_decision_snapshot(
+    settings: Settings | None = None,
+    *,
+    as_of: datetime | None = None,
+) -> str:
+    """Resolve the newest complete DECISION board with at least one future game."""
+    resolved = settings or get_settings()
+    initialize_database(resolved)
+    now = (as_of or datetime.now(UTC)).astimezone(UTC)
+    with connect(resolved) as connection:
+        rows = connection.execute(
+            "SELECT DISTINCT r.snapshot_id,r.retrieved_at_utc,g.kickoff_utc "
+            "FROM raw_snapshots r "
+            "JOIN api_requests a ON a.raw_snapshot_id=r.snapshot_id "
+            "JOIN market_odds m ON m.snapshot_id=r.snapshot_id "
+            "JOIN games g ON g.game_id=m.game_id "
+            "WHERE r.snapshot_purpose='DECISION' AND a.status='COMPLETE' "
+            "ORDER BY r.retrieved_at_utc DESC,r.snapshot_id,g.kickoff_utc"
+        ).fetchall()
+    for row in rows:
+        retrieved = _parse_utc(row["retrieved_at_utc"], "snapshot retrieval time")
+        kickoff = _parse_utc(row["kickoff_utc"], "game kickoff")
+        if retrieved <= now < kickoff:
+            return str(row["snapshot_id"])
+    raise ProspectiveDataError("No complete pregame DECISION snapshot is available")
+
+
+def settle_challenger_predictions(
+    through: datetime,
+    *,
+    version: str = "challenger-0.2.0",
+    settings: Settings | None = None,
+) -> dict[str, Any]:
+    """Keep challenger outcome evidence sealed until the Week 8 slate is final."""
+    resolved = settings or get_settings()
+    games = pd.read_csv(resolved.root / "games.csv")
+    required = {"season", "week", "game_type", "kickoff_utc", "home_score", "away_score"}
+    if missing := required - set(games.columns):
+        raise ProspectiveDataError(f"Games data missing required fields: {sorted(missing)}")
+    week_eight = games.loc[
+        games["season"].eq(2026) & games["week"].eq(8) & games["game_type"].eq("REG")
+    ].copy()
+    final = week_eight[["home_score", "away_score"]].notna().all(axis=1)
+    if week_eight.empty or not bool(final.all()):
+        raise ProspectiveDataError(
+            "Challenger outcomes are sealed until every Week 8 game is final"
+        )
+    latest_kickoff = pd.to_datetime(week_eight["kickoff_utc"], utc=True).max()
+    if pd.Timestamp(through).tz_convert("UTC") < latest_kickoff:
+        raise ProspectiveDataError(
+            "Challenger outcomes are sealed until every Week 8 game is final"
+        )
+    return settle_predictions(through=through, version=version, settings=resolved)
+
+
 def compare_challenger(
     *,
     through_week: int,
-    version: str = "challenger-0.1.0",
+    version: str = "challenger-0.2.0",
     baseline: str = "1.1.2",
     settings: Settings | None = None,
 ) -> dict[str, Any]:
+    if through_week < 8:
+        raise ProspectiveDataError("Challenger comparison evidence is sealed through Week 8")
     resolved = settings or get_settings()
     initialize_database(resolved)
     with connect(resolved) as connection:
@@ -680,9 +818,7 @@ def compare_challenger(
         eligible = data.loc[data[f"eligible_non_push_{suffix}"].eq(1)].copy()
         if eligible.empty:
             return {"eligible_non_push": 0}
-        projection = pd.to_numeric(
-            eligible[f"projection_error_{suffix}"], errors="coerce"
-        ).dropna()
+        projection = pd.to_numeric(eligible[f"projection_error_{suffix}"], errors="coerce").dropna()
         market_projection = pd.to_numeric(
             eligible[f"market_projection_error_{suffix}"], errors="coerce"
         ).dropna()
@@ -703,9 +839,7 @@ def compare_challenger(
                 if not market_projection.empty
                 else None
             ),
-            "mean_probability_clv": mean_or_none(
-                f"market_probability_movement_{suffix}"
-            ),
+            "mean_probability_clv": mean_or_none(f"market_probability_movement_{suffix}"),
         }
 
     by_market: dict[str, Any] = {}
@@ -722,9 +856,7 @@ def compare_challenger(
         "season": 2026,
         "through_week": through_week,
         "status": (
-            "MATCHED_EVIDENCE_AVAILABLE"
-            if not matched.empty
-            else "INSUFFICIENT_MATCHED_EVIDENCE"
+            "MATCHED_EVIDENCE_AVAILABLE" if not matched.empty else "INSUFFICIENT_MATCHED_EVIDENCE"
         ),
         "challenger_evaluations": int(len(challenger)),
         "baseline_evaluations": int(len(frozen)),
@@ -735,8 +867,7 @@ def compare_challenger(
         "promotion_authorized": False,
     }
     path = (
-        resolved.reports_dir
-        / f"challenger_comparison_{version}_through_week_{through_week}.json"
+        resolved.reports_dir / f"challenger_comparison_{version}_through_week_{through_week}.json"
     )
     atomic_write_text(path, json.dumps(report, sort_keys=True, indent=2, allow_nan=False))
     report["report_path"] = str(path.relative_to(resolved.root)).replace("\\", "/")

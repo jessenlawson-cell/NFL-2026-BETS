@@ -2,7 +2,7 @@
 
 ## Status
 
-`challenger-0.1.0` is an experimental, no-stakes comparator. Its official decision is always
+`challenger-0.2.0` is an experimental, no-stakes comparator. Its official decision is always
 `PASS`. It must not alter, retrain, replace, or reinterpret frozen model `1.1.2`.
 
 ## Prospective window
@@ -14,7 +14,7 @@ games completed before the prediction timestamp.
 
 ## Inputs
 
-The point projections are football-only and do not use a market line as a predictor. Candidate
+The raw point projections are football-only and do not use a market line as a predictor. Candidate
 feature families are derived from nflverse play-by-play and snap counts: passing, rushing,
 pressure, neutral PROE and tendency, special teams, continuity, rest, roof, and surface. Injury
 clusters are displayed as unweighted warnings. Coverage, numerical injury values, and weather are
@@ -27,14 +27,21 @@ from the selected frozen model against a league-average opponent; they add no se
 
 ## Development
 
-Feature-family combinations, half-life, prior strength, and ridge penalties are compared with
-expanding chronological folds through 2025. The deterministic selection order is mean raw
-non-push log loss, mean Brier score, feature count, half-life, prior strength, then feature-set
-name. Completed Weeks 1 and 2 may enter only the final fit after selection.
+Feature-family combinations, half-life, prior strength, Ridge penalty, model family, blend weight,
+and market-regression weight are selected separately for spreads and totals. Candidate model
+families are Ridge, deterministic histogram gradient boosting, and fixed Ridge/tree blends. The
+market-only forecast is the baseline and a football weight of zero is valid.
 
-Separate ridge models predict home margin and combined total. Empirical residual distributions
-produce win, push, and loss probabilities; spread distributions retain signed key-number mass at
-3, 6, 7, 10, and 14. Probability calibration is fit on chronological out-of-fold predictions.
+Selection uses nested expanding chronological folds through 2025. The outer 2024 and 2025 folds
+are untouched by their inner selection. Ranking uses non-push log loss, Brier score, RMSE, feature
+count, and model simplicity in that order. Completed Weeks 1 and 2 may enter only the final fit
+after every Week 2 game is final.
+
+Empirical residual distributions produce win, push, and loss probabilities; spread distributions
+retain signed key-number mass at 3, 6, 7, 10, and 14. Probability calibration is fit only on
+chronological out-of-fold predictions. Development evidence records calibration, reliability,
+edge buckets, paired bootstrap intervals against market, Ridge/tree disagreement, feature drift,
+and complete input/specification hashes.
 
 ## Shadow eligibility
 
@@ -49,3 +56,5 @@ The challenger and `1.1.2` use identical DECISION and CLOSE snapshots. Week 3-8 
 matched game-market contracts and reports exclusions rather than imputing missing evidence. The
 primary evidence is Brier score, log loss, calibration, projection error, and independent CLV.
 Short-run ROI is descriptive only. Week 8 review does not imply promotion.
+Outcomes, settlement, CLV, ROI, and comparator results remain sealed until every Week 8 game is
+final.

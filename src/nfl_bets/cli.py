@@ -7,7 +7,12 @@ from typing import Annotated
 import typer
 from rich.console import Console
 
-from nfl_bets.challenger import compare_challenger, predict_challenger_snapshot
+from nfl_bets.challenger import (
+    compare_challenger,
+    latest_valid_decision_snapshot,
+    predict_challenger_snapshot,
+    settle_challenger_predictions,
+)
 from nfl_bets.data.sync import sync_data
 from nfl_bets.db import initialize_database
 from nfl_bets.features.build import build_features
@@ -156,7 +161,7 @@ def challenger_features_build(
 
 @challenger_app.command("train")
 def challenger_train(
-    version: Annotated[str, typer.Option("--version")] = "challenger-0.1.0",
+    version: Annotated[str, typer.Option("--version")] = "challenger-0.2.0",
     through_week: Annotated[int, typer.Option("--through-week")] = 2,
 ) -> None:
     """Select, fit, and freeze the no-stakes Week 3-8 challenger."""
@@ -165,28 +170,33 @@ def challenger_train(
 
 @challenger_app.command("predict")
 def challenger_predict(
-    snapshot_id: Annotated[str, typer.Option("--snapshot-id")],
-    version: Annotated[str, typer.Option("--version")] = "challenger-0.1.0",
+    snapshot_id: Annotated[str | None, typer.Option("--snapshot-id")] = None,
+    latest: Annotated[bool, typer.Option("--latest")] = False,
+    version: Annotated[str, typer.Option("--version")] = "challenger-0.2.0",
     top: Annotated[int, typer.Option("--top", min=1, max=10)] = 5,
 ) -> None:
     """Score an existing DECISION snapshot without contacting the odds provider."""
-    _print_result(predict_challenger_snapshot(snapshot_id, version=version, top=top))
+    if latest == (snapshot_id is not None):
+        raise typer.BadParameter("Choose exactly one of --latest or --snapshot-id")
+    selected = latest_valid_decision_snapshot() if latest else snapshot_id
+    assert selected is not None
+    _print_result(predict_challenger_snapshot(selected, version=version, top=top))
 
 
 @challenger_app.command("settle")
 def challenger_settle(
     through: Annotated[str, typer.Option("--through")],
-    version: Annotated[str, typer.Option("--version")] = "challenger-0.1.0",
+    version: Annotated[str, typer.Option("--version")] = "challenger-0.2.0",
 ) -> None:
     """Settle predictions using existing independent CLOSE evidence."""
     parsed_through = datetime.fromisoformat(through.replace("Z", "+00:00"))
-    _print_result(settle_predictions(through=parsed_through, version=version))
+    _print_result(settle_challenger_predictions(parsed_through, version=version))
 
 
 @challenger_app.command("compare")
 def challenger_compare(
     through_week: Annotated[int, typer.Option("--through-week")],
-    version: Annotated[str, typer.Option("--version")] = "challenger-0.1.0",
+    version: Annotated[str, typer.Option("--version")] = "challenger-0.2.0",
     baseline: Annotated[str, typer.Option("--baseline")] = "1.1.2",
 ) -> None:
     """Compare matched challenger and frozen-model evaluations."""
@@ -257,9 +267,16 @@ def odds_snapshot(
 def pilot_capture(
     slot: Annotated[str, typer.Option("--slot", help="One configured weekly slot name.")],
     version: Annotated[str, typer.Option("--version")] = "1.1.2",
+    shadow_version: Annotated[str | None, typer.Option("--shadow-version")] = None,
 ) -> None:
     """Capture the slot's registered DECISION or CLOSE board."""
-    _print_result(capture_pilot_slot(slot=slot, version=version))
+    _print_result(
+        capture_pilot_slot(
+            slot=slot,
+            version=version,
+            shadow_version=shadow_version,
+        )
+    )
 
 
 @pilot_app.command("preflight")
@@ -269,9 +286,17 @@ def pilot_preflight(
         typer.Option("--slot", help="Optional configured slot to check for duplicate capture."),
     ] = None,
     version: Annotated[str, typer.Option("--version")] = "1.1.2",
+    shadow_version: Annotated[str | None, typer.Option("--shadow-version")] = None,
 ) -> None:
     """Check capture readiness without contacting the odds provider or spending credits."""
-    _print_result(preflight_pilot(slot=slot, version=version))
+    result = preflight_pilot(
+        slot=slot,
+        version=version,
+        shadow_version=shadow_version,
+    )
+    _print_result(result)
+    if not result["safe_to_capture"]:
+        raise typer.Exit(2)
 
 
 @pilot_app.command("reconcile")
@@ -314,9 +339,16 @@ def show_pilot_status(
         typer.Option("--week-bucket", help="Tuesday-start date, for example 2026-09-15."),
     ] = None,
     version: Annotated[str, typer.Option("--version")] = "1.1.2",
+    shadow_version: Annotated[str | None, typer.Option("--shadow-version")] = None,
 ) -> None:
     """Verify that every manual slot produced intact raw data and PASS predictions."""
-    _print_result(pilot_status(week_bucket=week_bucket, version=version))
+    _print_result(
+        pilot_status(
+            week_bucket=week_bucket,
+            version=version,
+            shadow_version=shadow_version,
+        )
+    )
 
 
 @app.command("settle")

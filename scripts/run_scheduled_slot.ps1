@@ -1,6 +1,8 @@
 param(
     [Parameter(Mandatory = $true)]
-    [string]$Slot
+    [string]$Slot,
+    [string]$Version = "1.1.2",
+    [string]$ShadowVersion = "challenger-0.2.0"
 )
 
 $ErrorActionPreference = "Stop"
@@ -13,7 +15,25 @@ Push-Location $repository
 try {
     $timestamp = (Get-Date).ToUniversalTime().ToString("o")
     Add-Content -LiteralPath $logPath -Value "$timestamp START $Slot"
-    docker compose run --rm nfl-bets pilot capture --slot $Slot *>> $logPath
+    $preflightArguments = @(
+        "compose", "run", "--rm", "nfl-bets", "pilot", "preflight",
+        "--slot", $Slot, "--version", $Version
+    )
+    if ($ShadowVersion) {
+        $preflightArguments += @("--shadow-version", $ShadowVersion)
+    }
+    & docker @preflightArguments *>> $logPath
+    if ($LASTEXITCODE -ne 0) {
+        throw "Scheduled slot $Slot failed zero-credit preflight"
+    }
+    $dockerArguments = @(
+        "compose", "run", "--rm", "nfl-bets", "pilot", "capture",
+        "--slot", $Slot, "--version", $Version
+    )
+    if ($ShadowVersion) {
+        $dockerArguments += @("--shadow-version", $ShadowVersion)
+    }
+    & docker @dockerArguments *>> $logPath
     if ($LASTEXITCODE -ne 0) {
         throw "Scheduled slot $Slot failed with exit code $LASTEXITCODE"
     }

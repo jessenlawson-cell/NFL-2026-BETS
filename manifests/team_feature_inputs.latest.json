@@ -1,7 +1,7 @@
 {
   "artifact": "data/runtime/features/team_game_lags.parquet",
-  "as_of_utc": "2026-09-13T19:20:14.760705Z",
-  "content_hash": "ff1f7c1ec1e360087ac3c74658a19a47ea849df35806d124ffdd2e47c40d9e60",
+  "as_of_utc": "2026-09-20T15:42:19.119895Z",
+  "content_hash": "f0923ba90734aded4f8ca84b9957f8e8301b0bce05d5124974d298608d9b2fce",
   "half_life_grid": [
     1.0,
     2.0,
@@ -19,11 +19,11 @@
     0.75,
     1.0
   ],
-  "retrieved_at_utc": "2026-09-13T19:21:45.271837Z",
+  "retrieved_at_utc": "2026-09-20T15:45:19.265173Z",
   "rolling_games": 4,
-  "rows": 8906,
-  "schema_version": "1.0.0",
+  "rows": 8926,
+  "schema_version": "1.1.0",
   "source": "nflverse:pbp-derived",
   "status": "BUILT_UNWEIGHTED",
-  "sync_run_id": "4e628e8e-14b3-43cd-a731-9b62c85b04a5"
+  "sync_run_id": "51b3f104-3c43-44d9-b907-25cee11064b5"
 }

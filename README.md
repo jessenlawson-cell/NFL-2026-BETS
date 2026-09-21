@@ -59,6 +59,9 @@ nfl-bets model train --version 1.0.1
 nfl-bets model test --version 1.0.1 --season 2025
 nfl-bets v11 features build --as-of 2026-09-13T19:20:14.760705Z
 nfl-bets v11 model train --version 1.1.2
+nfl-bets challenger features build --as-of <sync-timestamp> --through-week 2
+nfl-bets challenger train --version challenger-0.2.0 --through-week 2
+nfl-bets challenger predict --latest --version challenger-0.2.0 --top 5
 nfl-bets odds snapshot --slot manual --purpose DIAGNOSTIC
 nfl-bets v11 predict --snapshot-id <snapshot-id>
 nfl-bets settle --through 2026-09-21T12:00:00-04:00
@@ -100,22 +103,30 @@ V1.1 candidate `1.1.2` is frozen as `LOCKED_UNTESTED_2026`. Its evaluation popul
 after its recorded prospective cutoff, so earlier 2026 games are ineligible. Injury clusters are
 available as diagnostics but model-disabled because the synchronized archive begins in 2025.
 
+The parallel `challenger-0.2.0` lane selects Ridge, deterministic histogram-gradient-boosting,
+fixed blends, feature families, recency settings, and market-regression weight separately for
+spreads and totals using nested chronological validation. It is also PASS-only: reports may show
+up to five `SHADOW_CANDIDATE` rows but never stakes. Results, CLV, ROI, and matched comparison stay
+sealed until every Week 8 game is final.
+
 ## Stage 9 observer operation
 
 The model now has an immutable prospective ledger. A prediction uses the exact `1.1.2` artifact,
 current leakage-safe V1.1 features, and the Pinnacle point available in a saved odds snapshot.
 Every row remains `PASS` because prospective uncertainty and staking have not been validated.
 
-Use `nfl-bets pilot capture --slot <slot-name>` for each of the 16 configured slots during one
-complete manual week. This performs exactly one consolidated odds request and immediately writes
-the corresponding PASS-only predictions. It does not retry an ambiguous request. Check progress
-with:
+Use `nfl-bets pilot capture --slot <slot-name> --shadow-version challenger-0.2.0` for dual-lane
+collection. This performs exactly one consolidated odds request and sends the identical DECISION
+snapshot to both PASS-only lanes. Challenger failure cannot trigger another provider call. Check
+progress with:
 
 ```powershell
-docker compose run --rm nfl-bets pilot preflight --slot monday_1200
-docker compose run --rm nfl-bets pilot status --week-bucket 2026-09-15
+docker compose run --rm nfl-bets pilot preflight --slot monday_1200 `
+  --shadow-version challenger-0.2.0
+docker compose run --rm nfl-bets pilot status --week-bucket 2026-09-22 `
+  --shadow-version challenger-0.2.0
 docker compose run --rm nfl-bets pilot reconcile --slot monday_1200 `
-  --week-bucket 2026-09-15
+  --week-bucket 2026-09-22
 ```
 
 `pilot preflight` contacts no provider and spends no credits. It returns `READY` only when the
@@ -129,14 +140,24 @@ resolutions are `SAFE_TO_RETRY_NO_CALL`, `PROVIDER_CONFIRMED_NOT_BILLED`, and
 `PROVIDER_CONFIRMED_BILLED`; every resolution requires `--note`. No retry is automatic. See
 `SEQUENCE_2_CAPTURE_IDEMPOTENCY.md` for the failure-phase rules.
 
-Only after that report says `PASSED` may the Windows tasks be installed:
+Install the one-time 2026-09-22 pilot with:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\install_pilot_tasks_once.ps1 `
+  -PilotWeekBucket 2026-09-22
+```
+
+The one-time installer registers two fail-closed preparation checks, 16 concrete capture times,
+and a Monday finalizer. The finalizer installs recurring captures and the Week 3-7 observation
+refreshes only when both lanes pass all 16 slots. To install recurring tasks from an already
+verified report directly:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\install_scheduled_tasks.ps1 `
-  -PilotWeekBucket 2026-09-15
+  -PilotWeekBucket 2026-09-22
 ```
 
-The installer verifies all 16 manual slots and the Windows Toronto-compatible time zone. Missed
+The installer verifies all 16 registered slots and the Windows Toronto-compatible time zone. Missed
 tasks are not replayed. See `STAGE_9_PROSPECTIVE_LEDGER.md` for the operational contract.
 
 ## Working rule

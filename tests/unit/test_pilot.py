@@ -9,7 +9,12 @@ from pydantic import SecretStr
 from nfl_bets.config import Settings
 from nfl_bets.db import connect, initialize_database
 from nfl_bets.odds.client import SCHEDULED_SLOT_PURPOSES, SCHEDULED_SLOTS, _snapshot_purpose
-from nfl_bets.pilot import PREFLIGHT_REQUIRED_FILES, pilot_status, preflight_pilot
+from nfl_bets.pilot import (
+    PREFLIGHT_REQUIRED_FILES,
+    capture_pilot_slot,
+    pilot_status,
+    preflight_pilot,
+)
 
 
 def _ready_settings(tmp_path) -> Settings:
@@ -71,6 +76,30 @@ def test_preflight_is_ready_without_contacting_provider(tmp_path, monkeypatch) -
         assert connection.execute("SELECT COUNT(*) FROM api_requests").fetchone()[0] == 0
 
 
+def test_preflight_requires_the_frozen_shadow_bundle_when_requested(tmp_path, monkeypatch) -> None:
+    settings = _ready_settings(tmp_path)
+    monkeypatch.setattr("nfl_bets.pilot._running_in_container", lambda: True)
+    monkeypatch.setattr("nfl_bets.pilot._runtime_paths_aligned", lambda _: True)
+    monkeypatch.setattr(
+        "nfl_bets.pilot.load_frozen_bundle",
+        lambda **_: SimpleNamespace(policy={"status": "LOCKED_UNTESTED_2026"}),
+    )
+    monkeypatch.setattr(
+        "nfl_bets.pilot.load_challenger_bundle",
+        lambda *_, **__: SimpleNamespace(policy={"status": "SHADOW_FROZEN_WEEK3_TO_8"}),
+    )
+
+    result = preflight_pilot(
+        slot="monday_1200",
+        shadow_version="challenger-0.2.0",
+        settings=settings,
+    )
+
+    assert result["status"] == "READY"
+    assert result["shadow_model_version"] == "challenger-0.2.0"
+    assert {row["name"] for row in result["checks"]} >= {"frozen_model", "shadow_model"}
+
+
 def test_preflight_blocks_missing_key_and_duplicate_slot(tmp_path, monkeypatch) -> None:
     settings = _ready_settings(tmp_path)
     settings.the_odds_api_key = None
@@ -95,3 +124,59 @@ def test_preflight_blocks_missing_key_and_duplicate_slot(tmp_path, monkeypatch) 
     assert result["status"] == "NOT_READY"
     failures = {row["name"] for row in result["checks"] if row["status"] == "FAIL"}
     assert {"api_key", "duplicate_slot"} <= failures
+
+
+def test_challenger_failure_never_repeats_provider_capture(tmp_path, monkeypatch) -> None:
+    settings = Settings.for_root(tmp_path)
+    calls: list[str] = []
+
+    def capture(slot, *, settings, purpose):
+        calls.append(slot)
+        return {"snapshot_id": "snapshot", "snapshot_purpose": purpose}
+
+    monkeypatch.setattr("nfl_bets.pilot.snapshot_odds", capture)
+    monkeypatch.setattr("nfl_bets.pilot.predict_snapshot", lambda *_, **__: {"decision": "PASS"})
+    monkeypatch.setattr(
+        "nfl_bets.pilot.predict_challenger_snapshot",
+        lambda *_, **__: (_ for _ in ()).throw(RuntimeError("fixture failure")),
+    )
+
+    result = capture_pilot_slot(
+        "wednesday_0900",
+        shadow_version="challenger-0.2.0",
+        settings=settings,
+    )
+
+    assert calls == ["wednesday_0900"]
+    assert result["prediction"] == {"decision": "PASS"}
+    assert result["shadow_prediction"] == {
+        "model_version": "challenger-0.2.0",
+        "status": "FAILED",
+        "error_type": "RuntimeError",
+    }
+
+
+def test_both_lanes_use_the_same_decision_snapshot(tmp_path, monkeypatch) -> None:
+    settings = Settings.for_root(tmp_path)
+    monkeypatch.setattr(
+        "nfl_bets.pilot.snapshot_odds",
+        lambda *_, **__: {"snapshot_id": "shared-snapshot", "snapshot_purpose": "DECISION"},
+    )
+    monkeypatch.setattr(
+        "nfl_bets.pilot.predict_snapshot",
+        lambda snapshot_id, **_: {"snapshot_id": snapshot_id, "decision": "PASS"},
+    )
+    monkeypatch.setattr(
+        "nfl_bets.pilot.predict_challenger_snapshot",
+        lambda snapshot_id, **_: {"snapshot_id": snapshot_id, "decision": "PASS"},
+    )
+
+    result = capture_pilot_slot(
+        "wednesday_0900",
+        shadow_version="challenger-0.2.0",
+        settings=settings,
+    )
+
+    assert result["odds"]["snapshot_id"] == "shared-snapshot"
+    assert result["prediction"]["snapshot_id"] == "shared-snapshot"
+    assert result["shadow_prediction"]["snapshot_id"] == "shared-snapshot"

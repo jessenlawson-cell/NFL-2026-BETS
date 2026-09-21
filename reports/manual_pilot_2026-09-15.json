@@ -1,0 +1,63 @@
+{
+  "automatic_retry": false,
+  "decision_policy": "PASS-only",
+  "failed_attempts": 0,
+  "model_version": "1.1.2",
+  "passed_slots": 0,
+  "pilot_type": "ONE_FULL_WEEK_MANUAL",
+  "required_slots": 16,
+  "reservation_conflicts": 0,
+  "reservation_statuses": {},
+  "slots": {
+    "friday_1700": {
+      "status": "MISSING"
+    },
+    "monday_1200": {
+      "status": "MISSING"
+    },
+    "monday_1945": {
+      "status": "MISSING"
+    },
+    "saturday_0900": {
+      "status": "MISSING"
+    },
+    "saturday_1700": {
+      "status": "MISSING"
+    },
+    "saturday_2300": {
+      "status": "MISSING"
+    },
+    "sunday_0845": {
+      "status": "MISSING"
+    },
+    "sunday_1245": {
+      "status": "MISSING"
+    },
+    "sunday_1545": {
+      "status": "MISSING"
+    },
+    "sunday_1945": {
+      "status": "MISSING"
+    },
+    "sunday_open_2000": {
+      "status": "MISSING"
+    },
+    "sunday_open_2330": {
+      "status": "MISSING"
+    },
+    "thursday_1200": {
+      "status": "MISSING"
+    },
+    "thursday_1930": {
+      "status": "MISSING"
+    },
+    "wednesday_0900": {
+      "status": "MISSING"
+    },
+    "wednesday_1700": {
+      "status": "MISSING"
+    }
+  },
+  "status": "INCOMPLETE",
+  "week_bucket": "2026-09-15"
+}

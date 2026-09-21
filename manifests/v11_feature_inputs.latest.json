@@ -1,7 +1,7 @@
 {
   "artifact": "data/runtime/features/v11_team_game_lags.parquet",
-  "as_of_utc": "2026-09-13T19:20:14.760705Z",
-  "content_hash": "82bca56d8369d41212515d7d08351e32507304744e010ef5f39ea4798e22d302",
+  "as_of_utc": "2026-09-20T15:42:19.119895Z",
+  "content_hash": "4f76b89418036170a6a137a77e36f39494db57117b95f0ffc2259b64b044ff2f",
   "injury_diagnostics": [
     "qb_out_doubtful",
     "ol_out_doubtful",
@@ -41,10 +41,10 @@
     "def_snap_continuity"
   ],
   "neutral_rush_definition": "REG plays; rush_attempt=1; qb_kneel!=1; quarters 1-3; absolute pre-play score differential <=8",
-  "retrieved_at_utc": "2026-09-14T01:44:06.183666Z",
+  "retrieved_at_utc": "2026-09-20T15:44:42.782627Z",
   "rolling_games": 4,
-  "rows": 6842,
-  "schema_version": "1.0.0",
+  "rows": 6878,
+  "schema_version": "1.1.0",
   "seasons": [
     2013,
     2014,
@@ -64,23 +64,23 @@
   "snap_continuity_definition": "current player snap-share overlap with the immediately previous team game, divided by current unit snap-share",
   "source": "nflverse:pbp,snap-counts,injuries",
   "source_hashes": {
-    "injuries.csv": "3768fbd5127bcef7be0d0d195b0bfa987054e6d6357c190510f9bfe34bc02d45",
-    "pbp:2013": "a78ae07485a55b63c8c01a18a89de7b36629ba4138f76c96caade9c241efe2a8",
-    "pbp:2014": "db5f70b59bc6e3cd358b4ff3691738c4fab2f3023a2b792ee8f817f9a326c4a3",
-    "pbp:2015": "c7861f6051aaa8dc41b4012c305172d5535c2910b5141ac17bd7e3b87051bf1b",
-    "pbp:2016": "b463991a756f6c36edefc91fd458e373f27e99dda0aed4560f73c53e5b681e79",
-    "pbp:2017": "7369228d478a06ed9234f065308242187889fcc695cde557c70c09e4ca3a866f",
-    "pbp:2018": "c9477ef3065e906f5de0e8489f82f4673fd317c8cf84ab3064388027c78f95be",
-    "pbp:2019": "21e17daf6f4fa4654bebfc3bf97e0077731ab8ecc43f9b3125d879be3d4e37ff",
-    "pbp:2020": "a3ff9726a87634d22f786d107199a522150fe90a0326258fb9f15bb4e80a1179",
-    "pbp:2021": "aa8dec05bb188140f08ad56345395a1708e9012c102f90988c76e149e9b9d074",
-    "pbp:2022": "ea18c6b92fb2390327a0dcaef628d7b1a726b9b9399c668839244716e302048b",
-    "pbp:2023": "dd42da597b12a47b00c4ced90888e7b7b16152f0019c8f5a059e9902a571f8a1",
-    "pbp:2024": "6b8bbc96fc49f4c90da818abb4a5733b4b32180ff4e094c923c56e04b8e31b18",
-    "pbp:2025": "06d5fcffaaf15c615bc92f8cb9ae3ac9a1814f2cd3a08d67d7859831d536f711",
-    "pbp:2026": "18f6f7e80c320818a1616f6718d13b697e3f5f28531bdaa653ebaaa68b62f48d",
-    "player_usage.csv": "840280acc716581682c26f020e6613176baefa8bf8d62612720db330a597f385"
+    "injuries.csv": "f58d10e35b09bc1e60ec70be36cc3e70d6cfe2b649250c3708a325d7bc511834",
+    "pbp:2013": "2a31a7cd0e7e2306f626a0f1f4bb96679e5b3e92a8729695858adca35d8b2686",
+    "pbp:2014": "c6910558e235dac664b1b7f02654d47ea8d51904ef9ace5d4f015165604e0b12",
+    "pbp:2015": "b3314a52b781a00417528b2e3388d2596098cdbe7b565d3c962d7171a98ae70f",
+    "pbp:2016": "75fde790db65a5e5765930e5780c1452e96a6a58d4d802c79f10f5842a387bbc",
+    "pbp:2017": "0166785545b15de785075a154668996b8cb71294f7a7c3d9acbf4ae90a99f2dc",
+    "pbp:2018": "152e44436368be4c253d14c0cb0f8335a53f3790ce5ebdbb7648551371d62d2b",
+    "pbp:2019": "3878b8c99f5f3d977203b0e249b55ca913e59db3971420075ed35a0991610f6e",
+    "pbp:2020": "d86d1e3f98b64bd839c8533a3867cb0f0e3d6216cd11bddd11efd5bc6c594a04",
+    "pbp:2021": "d2fbf41c83c843e1c6db4ec117ef9b4b49b7730666f21005fc9951dce09d0e0a",
+    "pbp:2022": "311971fb4404dc8759a9f77c50ef2f4933fbd2d24deb5a747987058d0b6788a8",
+    "pbp:2023": "19fc2ce8abb85be47fad16ceff178c67d6581309e87d53bb70c4531373867b1e",
+    "pbp:2024": "e332d33a0c83a33073cde85f8e8f1ac0caebcc552eda7e7c92612ff306bafa73",
+    "pbp:2025": "5ed293fdf54d79e34426133829f3111faf577db29b8cfc25cf910d75eb55b2ef",
+    "pbp:2026": "b3105320db58bb7e4b327f47e1b6cdd3bd7520d6121d0e22c45841d540dd6dd8",
+    "player_usage.csv": "59a61e97116c52b140d9e462a2c2b902a7b951658b2b61329956d06d37e3d019"
   },
   "status": "BUILT_UNWEIGHTED",
-  "sync_run_id": "4e628e8e-14b3-43cd-a731-9b62c85b04a5"
+  "sync_run_id": "51b3f104-3c43-44d9-b907-25cee11064b5"
 }

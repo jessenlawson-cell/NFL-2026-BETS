@@ -6,6 +6,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from nfl_bets.challenger import load_challenger_bundle, predict_challenger_snapshot
 from nfl_bets.config import Settings, get_settings
 from nfl_bets.db import connect, initialize_database
 from nfl_bets.odds.client import (
@@ -57,6 +58,7 @@ def _check(name: str, passed: bool, detail: str, *, blocking: bool = True) -> di
 def preflight_pilot(
     slot: str | None = None,
     version: str = DEFAULT_MODEL_VERSION,
+    shadow_version: str | None = None,
     settings: Settings | None = None,
 ) -> dict[str, Any]:
     """Verify capture readiness without contacting the odds provider."""
@@ -246,6 +248,20 @@ def preflight_pilot(
         model_detail = f"Frozen model check failed: {type(exc).__name__}."
     checks.append(_check("frozen_model", model_ok, model_detail))
 
+    if shadow_version is not None:
+        try:
+            shadow = load_challenger_bundle(shadow_version, resolved)
+            shadow_ok = shadow.policy.get("status") == "SHADOW_FROZEN_WEEK3_TO_8"
+            shadow_detail = (
+                f"Frozen shadow model {shadow_version} passed artifact and source checks."
+                if shadow_ok
+                else f"Frozen shadow model {shadow_version} has an invalid status."
+            )
+        except Exception as exc:
+            shadow_ok = False
+            shadow_detail = f"Frozen shadow model check failed: {type(exc).__name__}."
+        checks.append(_check("shadow_model", shadow_ok, shadow_detail))
+
     ready = all(row["status"] != "FAIL" for row in checks)
     return {
         "status": "READY" if ready else "NOT_READY",
@@ -256,6 +272,7 @@ def preflight_pilot(
         "week_bucket": bucket,
         "slot": slot,
         "model_version": version,
+        "shadow_model_version": shadow_version,
         "decision_policy": "PASS-only",
         "checks": checks,
     }
@@ -264,6 +281,7 @@ def preflight_pilot(
 def capture_pilot_slot(
     slot: str,
     version: str = DEFAULT_MODEL_VERSION,
+    shadow_version: str | None = None,
     settings: Settings | None = None,
 ) -> dict[str, Any]:
     """Capture a registered snapshot; only DECISION snapshots create PASS predictions."""
@@ -277,11 +295,26 @@ def capture_pilot_slot(
         if purpose == "DECISION"
         else None
     )
+    shadow_prediction: dict[str, Any] | None = None
+    if purpose == "DECISION" and shadow_version is not None:
+        try:
+            shadow_prediction = predict_challenger_snapshot(
+                str(odds["snapshot_id"]),
+                version=shadow_version,
+                settings=resolved,
+            )
+        except Exception as exc:  # isolate challenger scoring from the paid capture
+            shadow_prediction = {
+                "model_version": shadow_version,
+                "status": "FAILED",
+                "error_type": type(exc).__name__,
+            }
     return {
         "slot": slot,
         "snapshot_purpose": purpose,
         "odds": odds,
         "prediction": prediction,
+        "shadow_prediction": shadow_prediction,
         "decision": "PASS",
         "automatic_retry": False,
     }
@@ -320,6 +353,7 @@ def _snapshot_is_intact(row: dict[str, Any]) -> bool:
 def pilot_status(
     week_bucket: str | None = None,
     version: str = DEFAULT_MODEL_VERSION,
+    shadow_version: str | None = None,
     settings: Settings | None = None,
 ) -> dict[str, Any]:
     resolved = settings or get_settings()
@@ -361,6 +395,17 @@ def pilot_status(
                     (request["raw_snapshot_id"], version),
                 ).fetchone()[0]
             )
+            shadow_prediction_count = (
+                int(
+                    connection.execute(
+                        "SELECT COUNT(*) FROM model_predictions "
+                        "WHERE snapshot_id=? AND model_version=?",
+                        (request["raw_snapshot_id"], shadow_version),
+                    ).fetchone()[0]
+                )
+                if shadow_version is not None
+                else None
+            )
             non_pass = int(
                 connection.execute(
                     "SELECT COUNT(*) FROM model_predictions "
@@ -371,9 +416,12 @@ def pilot_status(
             raw_intact = snapshot is not None and _snapshot_is_intact(dict(snapshot))
             purpose_matches = snapshot is not None and snapshot["snapshot_purpose"] == purpose
             prediction_state_ok = (
-                prediction_count > 0 and non_pass == 0
+                prediction_count > 0
+                and non_pass == 0
+                and (shadow_version is None or bool(shadow_prediction_count))
                 if purpose == "DECISION"
                 else prediction_count == 0
+                and (shadow_prediction_count is None or shadow_prediction_count == 0)
             )
             passed = raw_intact and purpose_matches and quote_count > 0 and prediction_state_ok
             slots[slot] = {
@@ -385,6 +433,7 @@ def pilot_status(
                 "purpose_matches": purpose_matches,
                 "quotes": quote_count,
                 "predictions": prediction_count,
+                "shadow_predictions": shadow_prediction_count,
                 "non_pass_decisions": non_pass,
             }
         reservation_summary = {
@@ -408,6 +457,7 @@ def pilot_status(
         "pilot_type": "ONE_FULL_WEEK_MANUAL",
         "week_bucket": bucket,
         "model_version": version,
+        "shadow_model_version": shadow_version,
         "status": status,
         "required_slots": len(SCHEDULED_SLOTS),
         "passed_slots": passed_slots,
