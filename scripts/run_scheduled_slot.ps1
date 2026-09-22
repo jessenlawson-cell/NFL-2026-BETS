@@ -13,6 +13,7 @@ $logPath = Join-Path $logDirectory "scheduled-slots.log"
 
 Push-Location $repository
 try {
+    Get-Command docker -ErrorAction Stop | Out-Null
     $timestamp = (Get-Date).ToUniversalTime().ToString("o")
     Add-Content -LiteralPath $logPath -Value "$timestamp START $Slot"
     $preflightArguments = @(
@@ -22,8 +23,11 @@ try {
     if ($ShadowVersion) {
         $preflightArguments += @("--shadow-version", $ShadowVersion)
     }
+    $ErrorActionPreference = "Continue"
     & docker @preflightArguments *>> $logPath
-    if ($LASTEXITCODE -ne 0) {
+    $preflightExitCode = $LASTEXITCODE
+    $ErrorActionPreference = "Stop"
+    if ($preflightExitCode -ne 0) {
         throw "Scheduled slot $Slot failed zero-credit preflight"
     }
     $dockerArguments = @(
@@ -33,9 +37,12 @@ try {
     if ($ShadowVersion) {
         $dockerArguments += @("--shadow-version", $ShadowVersion)
     }
+    $ErrorActionPreference = "Continue"
     & docker @dockerArguments *>> $logPath
-    if ($LASTEXITCODE -ne 0) {
-        throw "Scheduled slot $Slot failed with exit code $LASTEXITCODE"
+    $captureExitCode = $LASTEXITCODE
+    $ErrorActionPreference = "Stop"
+    if ($captureExitCode -ne 0) {
+        throw "Scheduled slot $Slot failed with exit code $captureExitCode"
     }
     $timestamp = (Get-Date).ToUniversalTime().ToString("o")
     Add-Content -LiteralPath $logPath -Value "$timestamp COMPLETE $Slot"
