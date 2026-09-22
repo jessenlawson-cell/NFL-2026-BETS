@@ -1,0 +1,14 @@
+{
+  "artifact": "artifacts/models/challenger-0.2.0/candidate.joblib",
+  "artifact_hash": "5c8bf3ec348a261ab2c0ce94bd8cc315f754a8dc991c15c20d0d961d06997984",
+  "development_feature_hash": "56166ee81e572e0c2a70d1e4b36b4fc997d462b22eacc8661a1d4a66684bf7f1",
+  "feature_input_hash": "3ecdbfbaf3290a1d0f9b9aee517e61634d37a7bdde41367b8b77ffdf6363f311",
+  "metadata_hash": "7ddff5fbab9a79f9cc00e8e962cf1809bce5891014562351a447923a9de72230",
+  "model_version": "challenger-0.2.0",
+  "prospective_end_week": 8,
+  "prospective_start_week": 3,
+  "schema_version": "1.1.0",
+  "spec_hash": "49fadb583b0dee0ba78c242826cb3e521cee0c4af2da837cfd5df18936598793",
+  "status": "SHADOW_FROZEN_WEEK3_TO_8",
+  "training_cutoff": "2026-W02"
+}

@@ -12,9 +12,13 @@ $logPath = Join-Path $logDirectory "feature-refresh.log"
 
 function Invoke-NflBets {
     param([string[]]$Arguments)
+    Get-Command docker -ErrorAction Stop | Out-Null
+    $ErrorActionPreference = "Continue"
     & docker compose run --rm nfl-bets @Arguments *>> $logPath
-    if ($LASTEXITCODE -ne 0) {
-        throw "nfl-bets $($Arguments -join ' ') failed with exit code $LASTEXITCODE"
+    $exitCode = $LASTEXITCODE
+    $ErrorActionPreference = "Stop"
+    if ($exitCode -ne 0) {
+        throw "nfl-bets $($Arguments -join ' ') failed with exit code $exitCode"
     }
 }
 
