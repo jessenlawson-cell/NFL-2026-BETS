@@ -1,0 +1,211 @@
+{
+  "decision": "PASS",
+  "feature_as_of": "2026-09-22T18:51:43.097248Z",
+  "games_evaluated": 14,
+  "injury_warning": "Injury diagnostics are unweighted and do not alter probabilities.",
+  "inserted": 64,
+  "markets_recorded": 64,
+  "mode": "EXPERIMENTAL_SHADOW_NO_STAKES",
+  "model_version": "challenger-0.2.0",
+  "power_rankings": [
+    {
+      "neutral_field_rating": 3.827178992781901,
+      "rank": 1,
+      "team_id": "SF",
+      "total_environment_rating": 3.713087006761306
+    },
+    {
+      "neutral_field_rating": 3.7302108849221938,
+      "rank": 2,
+      "team_id": "JAX",
+      "total_environment_rating": 0.4144863384960331
+    },
+    {
+      "neutral_field_rating": 3.2534248504483454,
+      "rank": 3,
+      "team_id": "SEA",
+      "total_environment_rating": -0.5250993936842221
+    },
+    {
+      "neutral_field_rating": 2.8428055256790064,
+      "rank": 4,
+      "team_id": "NE",
+      "total_environment_rating": 0.20019295293796802
+    },
+    {
+      "neutral_field_rating": 2.4961429249695755,
+      "rank": 5,
+      "team_id": "BAL",
+      "total_environment_rating": 2.0945415565380117
+    },
+    {
+      "neutral_field_rating": 1.8532323362715122,
+      "rank": 6,
+      "team_id": "BUF",
+      "total_environment_rating": 2.4921609957252713
+    },
+    {
+      "neutral_field_rating": 1.6976736578602019,
+      "rank": 7,
+      "team_id": "LV",
+      "total_environment_rating": -2.480555919921592
+    },
+    {
+      "neutral_field_rating": 1.4732984370240914,
+      "rank": 8,
+      "team_id": "MIN",
+      "total_environment_rating": -3.1724790831662233
+    },
+    {
+      "neutral_field_rating": 1.0660748556730724,
+      "rank": 9,
+      "team_id": "KC",
+      "total_environment_rating": -1.5012933938226851
+    },
+    {
+      "neutral_field_rating": 0.848808243039961,
+      "rank": 10,
+      "team_id": "CHI",
+      "total_environment_rating": 0.859572530003156
+    },
+    {
+      "neutral_field_rating": 0.6861496826633724,
+      "rank": 11,
+      "team_id": "LA",
+      "total_environment_rating": 1.600915998829862
+    },
+    {
+      "neutral_field_rating": 0.4785623711404341,
+      "rank": 12,
+      "team_id": "DEN",
+      "total_environment_rating": -0.39444405142820926
+    },
+    {
+      "neutral_field_rating": 0.4492447691800523,
+      "rank": 13,
+      "team_id": "WAS",
+      "total_environment_rating": 1.0582336895880218
+    },
+    {
+      "neutral_field_rating": 0.41140749770026375,
+      "rank": 14,
+      "team_id": "TB",
+      "total_environment_rating": 0.78747370419579
+    },
+    {
+      "neutral_field_rating": 0.2984012967759435,
+      "rank": 15,
+      "team_id": "CIN",
+      "total_environment_rating": -1.2069242545577552
+    },
+    {
+      "neutral_field_rating": 0.17638908039209156,
+      "rank": 16,
+      "team_id": "NYJ",
+      "total_environment_rating": -0.4431921988458143
+    },
+    {
+      "neutral_field_rating": 0.04729034174336011,
+      "rank": 17,
+      "team_id": "CAR",
+      "total_environment_rating": 1.3408338679076763
+    },
+    {
+      "neutral_field_rating": -0.0139331338246107,
+      "rank": 18,
+      "team_id": "LAC",
+      "total_environment_rating": -0.7360347945604602
+    },
+    {
+      "neutral_field_rating": -0.3022243378311025,
+      "rank": 19,
+      "team_id": "DAL",
+      "total_environment_rating": 2.145443138964886
+    },
+    {
+      "neutral_field_rating": -0.5221357859656284,
+      "rank": 20,
+      "team_id": "ARI",
+      "total_environment_rating": -1.2910751599944277
+    },
+    {
+      "neutral_field_rating": -0.6584053818464626,
+      "rank": 21,
+      "team_id": "PHI",
+      "total_environment_rating": 1.1656724442035014
+    },
+    {
+      "neutral_field_rating": -0.8217024742440395,
+      "rank": 22,
+      "team_id": "HOU",
+      "total_environment_rating": -0.7220901777357156
+    },
+    {
+      "neutral_field_rating": -0.8377823357952812,
+      "rank": 23,
+      "team_id": "GB",
+      "total_environment_rating": -1.6753760049828017
+    },
+    {
+      "neutral_field_rating": -1.0398518374323913,
+      "rank": 24,
+      "team_id": "NO",
+      "total_environment_rating": 1.289507322567843
+    },
+    {
+      "neutral_field_rating": -1.2187016280568275,
+      "rank": 25,
+      "team_id": "PIT",
+      "total_environment_rating": -2.138751030993568
+    },
+    {
+      "neutral_field_rating": -1.6338536545845375,
+      "rank": 26,
+      "team_id": "ATL",
+      "total_environment_rating": -2.51910169272918
+    },
+    {
+      "neutral_field_rating": -1.6557529651664744,
+      "rank": 27,
+      "team_id": "DET",
+      "total_environment_rating": -0.7959136754315566
+    },
+    {
+      "neutral_field_rating": -1.7535686853260521,
+      "rank": 28,
+      "team_id": "TEN",
+      "total_environment_rating": 1.4043850082256668
+    },
+    {
+      "neutral_field_rating": -2.724972467615333,
+      "rank": 29,
+      "team_id": "NYG",
+      "total_environment_rating": -0.7012716260586558
+    },
+    {
+      "neutral_field_rating": -3.4233026773075435,
+      "rank": 30,
+      "team_id": "IND",
+      "total_environment_rating": 0.2069339990518273
+    },
+    {
+      "neutral_field_rating": -3.780083950760362,
+      "rank": 31,
+      "team_id": "CLE",
+      "total_environment_rating": -2.592354678865611
+    },
+    {
+      "neutral_field_rating": -5.250024432508736,
+      "rank": 32,
+      "team_id": "MIA",
+      "total_environment_rating": 2.1225165827816
+    }
+  ],
+  "prediction_time": "2026-09-23T13:00:24.484171Z",
+  "qualifying_count": 0,
+  "snapshot_id": "d4b87e91-991a-4aa9-bfef-bc8de675e276",
+  "snapshot_purpose": "DECISION",
+  "snapshot_time": "2026-09-23T13:00:21.551276Z",
+  "top": [],
+  "unchanged": 0
+}
