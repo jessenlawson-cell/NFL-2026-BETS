@@ -11710,7 +11710,7 @@ FILE: NFL_2026_IMPLEMENTATION_KICKOFF.md
 
 ## How to use this document
 
-Open the saved Codex project **NFL BETTER**, which maps to:
+Open the saved Codex project **NFL QUANT**, which maps to:
 
 `C:\DEVELOPMENT\NFL QUANT`
 
