@@ -1,0 +1,75 @@
+{
+  "automatic_retry": false,
+  "decision_policy": "PASS-only",
+  "failed_attempts": 0,
+  "model_version": "1.1.2",
+  "passed_slots": 1,
+  "pilot_type": "ONE_FULL_WEEK_MANUAL",
+  "required_slots": 16,
+  "reservation_conflicts": 0,
+  "reservation_statuses": {
+    "COMPLETE": 1
+  },
+  "shadow_model_version": "challenger-0.2.0",
+  "slots": {
+    "friday_1700": {
+      "status": "MISSING"
+    },
+    "monday_1200": {
+      "status": "MISSING"
+    },
+    "monday_1945": {
+      "status": "MISSING"
+    },
+    "saturday_0900": {
+      "status": "MISSING"
+    },
+    "saturday_1700": {
+      "status": "MISSING"
+    },
+    "saturday_2300": {
+      "status": "MISSING"
+    },
+    "sunday_0845": {
+      "status": "MISSING"
+    },
+    "sunday_1245": {
+      "status": "MISSING"
+    },
+    "sunday_1545": {
+      "status": "MISSING"
+    },
+    "sunday_1945": {
+      "status": "MISSING"
+    },
+    "sunday_open_2000": {
+      "status": "MISSING"
+    },
+    "sunday_open_2330": {
+      "status": "MISSING"
+    },
+    "thursday_1200": {
+      "status": "MISSING"
+    },
+    "thursday_1930": {
+      "status": "MISSING"
+    },
+    "wednesday_0900": {
+      "non_pass_decisions": 0,
+      "predictions": 64,
+      "purpose_matches": true,
+      "quotes": 384,
+      "raw_intact": true,
+      "request_id": "bad666b9-c4f4-4e3b-852f-4a1d0933faef",
+      "shadow_predictions": 64,
+      "snapshot_id": "d4b87e91-991a-4aa9-bfef-bc8de675e276",
+      "snapshot_purpose": "DECISION",
+      "status": "PASSED"
+    },
+    "wednesday_1700": {
+      "status": "MISSING"
+    }
+  },
+  "status": "INCOMPLETE",
+  "week_bucket": "2026-09-22"
+}
