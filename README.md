@@ -6,7 +6,7 @@ The single local workspace for the 2026 NFL quantitative betting project.
 
 Open this repository in both Codex Desktop and VS Code:
 
-`C:\Users\jesse\OneDrive\Documents\GitHub\NFL-2026-BETS`
+`C:\DEVELOPMENT\NFL QUANT`
 
 The GitHub remote is `jessenlawson-cell/NFL-2026-BETS`. Project-specific Codex instructions live in `AGENTS.md`, so they travel with the repository and apply to future Codex tasks started from this folder.
 

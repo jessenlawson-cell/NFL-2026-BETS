@@ -162,7 +162,7 @@ The single local workspace for the 2026 NFL quantitative betting project.
 
 Open this repository in both Codex Desktop and VS Code:
 
-`C:\Users\jesse\OneDrive\Documents\GitHub\NFL-2026-BETS`
+`C:\DEVELOPMENT\NFL QUANT`
 
 The GitHub remote is `jessenlawson-cell/NFL-2026-BETS`. Project-specific Codex instructions live in `AGENTS.md`, so they travel with the repository and apply to future Codex tasks started from this folder.
 
@@ -11712,7 +11712,7 @@ FILE: NFL_2026_IMPLEMENTATION_KICKOFF.md
 
 Open the saved Codex project **NFL BETTER**, which maps to:
 
-`C:\Users\jesse\OneDrive\Documents\GitHub\NFL-2026-BETS`
+`C:\DEVELOPMENT\NFL QUANT`
 
 Start the task from the repository's current working tree so this document and the quantitative review are available. Paste the prompt below into that task. Do not run it from the separate `REPOSITORY` knowledge-base project.
 
@@ -11722,7 +11722,7 @@ This kickoff authorizes **implementation sequence item 1 only**. Complete and re
 
 ## Copy/paste implementation prompt
 
-You are the implementation owner for the NFL-2026-BETS observer and challenger program. Work in the current **NFL BETTER** repository only.
+You are the implementation owner for the NFL-2026-BETS observer and challenger program. Work in the current **NFL QUANT** repository only.
 
 ### Governing evidence
 
