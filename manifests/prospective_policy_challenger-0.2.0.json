@@ -11,7 +11,7 @@
   },
   "development_feature_hash": "56166ee81e572e0c2a70d1e4b36b4fc997d462b22eacc8661a1d4a66684bf7f1",
   "formal_test_minimum_week": 8,
-  "freeze_commit": "2825c62c64d27da002a802a40408bb1c419ac315",
+  "freeze_commit": "06cb437a3ffaaacd7bbdb902b529267eb04a45f9",
   "frozen_feature_input_hash": "3ecdbfbaf3290a1d0f9b9aee517e61634d37a7bdde41367b8b77ffdf6363f311",
   "metadata_hash": "7ddff5fbab9a79f9cc00e8e962cf1809bce5891014562351a447923a9de72230",
   "minimum_non_push_observations_per_market": 100,

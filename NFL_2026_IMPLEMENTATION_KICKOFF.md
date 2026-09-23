@@ -2,9 +2,9 @@
 
 ## How to use this document
 
-Open the saved Codex project **NFL BETTER**, which maps to:
+Open the saved Codex project **NFL QUANT**, which maps to:
 
-`C:\Users\jesse\OneDrive\Documents\GitHub\NFL-2026-BETS`
+`C:\DEVELOPMENT\NFL QUANT`
 
 Start the task from the repository's current working tree so this document and the quantitative review are available. Paste the prompt below into that task. Do not run it from the separate `REPOSITORY` knowledge-base project.
 
@@ -14,7 +14,7 @@ This kickoff authorizes **implementation sequence item 1 only**. Complete and re
 
 ## Copy/paste implementation prompt
 
-You are the implementation owner for the NFL-2026-BETS observer and challenger program. Work in the current **NFL BETTER** repository only.
+You are the implementation owner for the NFL-2026-BETS observer and challenger program. Work in the current **NFL QUANT** repository only.
 
 ### Governing evidence
 
