@@ -5,6 +5,7 @@ import math
 import subprocess
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
+from pathlib import Path
 from typing import Any
 
 import joblib
@@ -54,6 +55,47 @@ class PreparedChallengerFeatures:
     as_of: datetime
     input_hash: str
     materialized_by_market: dict[str, pl.DataFrame] | None = None
+
+
+CHALLENGER_GIT_PATHS = (
+    "src/nfl_bets/challenger.py",
+    "src/nfl_bets/model/challenger.py",
+    "src/nfl_bets/features/challenger.py",
+    "CHALLENGER_SPEC.md",
+)
+
+
+def _verify_challenger_git_identity(
+    root: Path, freeze_commit: str, protected_paths: tuple[str, ...] = CHALLENGER_GIT_PATHS
+) -> str:
+    git_commit = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        cwd=root,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    ancestor = subprocess.run(
+        ["git", "merge-base", "--is-ancestor", freeze_commit, git_commit], cwd=root
+    )
+    if ancestor.returncode != 0:
+        raise ProspectiveDataError("Current Git commit does not descend from challenger freeze")
+    changed = subprocess.run(
+        ["git", "diff", "--quiet", f"{freeze_commit}..{git_commit}", "--", *protected_paths],
+        cwd=root,
+    )
+    if changed.returncode != 0:
+        raise ProspectiveDataError("Protected files changed since challenger freeze")
+    status = subprocess.run(
+        ["git", "status", "--porcelain", "--", *protected_paths],
+        cwd=root,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    if status:
+        raise ProspectiveDataError("Tracked challenger code or specification is dirty")
+    return git_commit
 
 
 def rank_shadow_candidates(
@@ -150,34 +192,17 @@ def load_challenger_bundle(
         raise ProspectiveDataError("Challenger artifact version mismatch")
     if candidate.feature_hash != policy["development_feature_hash"]:
         raise ProspectiveDataError("Challenger development feature hash mismatch")
-    git_commit = subprocess.run(
-        ["git", "rev-parse", "HEAD"],
-        cwd=resolved.root,
-        check=True,
-        capture_output=True,
-        text=True,
-    ).stdout.strip()
-    if verify_git:
-        if git_commit != policy["freeze_commit"]:
-            raise ProspectiveDataError("Current Git commit differs from challenger freeze commit")
-        status = subprocess.run(
-            [
-                "git",
-                "status",
-                "--porcelain",
-                "--",
-                "src/nfl_bets/challenger.py",
-                "src/nfl_bets/model/challenger.py",
-                "src/nfl_bets/features/challenger.py",
-                "CHALLENGER_SPEC.md",
-            ],
+    git_commit = (
+        _verify_challenger_git_identity(resolved.root, policy["freeze_commit"])
+        if verify_git
+        else subprocess.run(
+            ["git", "rev-parse", "HEAD"],
             cwd=resolved.root,
             check=True,
             capture_output=True,
             text=True,
         ).stdout.strip()
-        if status:
-            raise ProspectiveDataError("Tracked challenger code or specification is dirty")
+    )
     return ChallengerBundle(
         candidate=candidate,
         policy=policy,
