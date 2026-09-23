@@ -33,6 +33,8 @@ This repository is the single local source of truth for the NFL betting project.
 ## Repository safeguards
 
 - Treat generated or synthetic data as test data unless provenance and an as-of timestamp prove otherwise.
+- Do not classify datasets, historical odds, model outputs, backtesting artifacts, research files, or provenance records as disposable merely because they are large, generated, infrequently accessed, or unsuitable for routine agent context. Determine their reproducibility and evidentiary value first. Prefer `.gitignore`, external archival storage, or conditional inspection instructions over deletion. When uncertain, classify them as `UNCERTAIN — REQUIRES HUMAN DECISION`.
+- Large evidence files are excluded from broad searches through `.ignore`; inspect them explicitly when the task depends on their contents.
 - Do not commit credentials, API keys, sportsbook account data, or personally identifying information.
 - Preserve losses, model versions, source timestamps, and raw inputs needed for reproducibility.
 - Run validation before any model output is described as actionable betting evidence.
