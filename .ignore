@@ -1,0 +1,11 @@
+# Keep large quantitative evidence out of routine repository-wide searches.
+# Inspect these files explicitly when a data, model, or provenance task requires them.
+/games.csv
+/injuries.csv
+/market_odds.csv
+/player_usage.csv
+/data/cache/**
+/data/raw/**
+/data/runtime/**
+/data/staging/**
+/artifacts/models/**

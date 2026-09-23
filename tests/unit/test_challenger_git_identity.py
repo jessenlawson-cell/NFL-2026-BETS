@@ -8,7 +8,6 @@ import pytest
 from nfl_bets.challenger import _verify_challenger_git_identity
 from nfl_bets.prospective import ProspectiveDataError
 
-
 PROTECTED = ("challenger.py",)
 
 

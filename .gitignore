@@ -50,6 +50,7 @@ logs/**
 outputs/**
 .coverage
 .codex_tmp/
+digest.md
 
 # Retain the intended directory tree without tracking runtime payloads.
 !data/cache/.gitkeep
